@@ -17,7 +17,9 @@ function readStorage(key, fallback) {
 function writeStorage(key, value) { try { localStorage.setItem(key, JSON.stringify(value)); } catch { /* private browsing is fine */ } }
 function initialState() {
   const settings = { ...DEFAULT_SETTINGS, ...readStorage(STORAGE_KEYS.settings, {}) };
-  const names = normalizeNames(readStorage(STORAGE_KEYS.names, []), settings.playerCount);
+  const rawNames = readStorage(STORAGE_KEYS.names, []);
+  const validNames = Array.isArray(rawNames) ? rawNames.map((n) => typeof n === 'string' ? n.trim() : '').filter(Boolean) : [];
+  const names = normalizeNames(validNames, settings.playerCount);
   return {
     phase: PHASES.SETUP,
     settings,
@@ -57,7 +59,8 @@ function reducer(state, action) {
       if (action.key === 'playerCount') {
         const count = action.value;
         settings.imposterCount = Math.min(settings.imposterCount, maxImposters(count));
-        const names = normalizeNames(state.players.map((player) => player.name), count);
+        const currentNames = state.players.map((player) => player.name?.trim() || '');
+        const names = normalizeNames(currentNames, count);
         return { ...state, settings, players: makePlayers(names, count) };
       }
       if (action.key === 'timerMinutes') return { ...state, settings, timerSeconds: action.value * 60 };
@@ -82,7 +85,12 @@ function reducer(state, action) {
     }
     case 'ADD_CUSTOM_WORD': return { ...state, customWords: [...state.customWords, action.entry], toast: { message: 'Custom word added to the mission bank.', tone: 'success' } };
     case 'DEAL': {
-      const roles = assignRoles(state.players.map((player) => ({ ...player, alive: true })), state.settings);
+      const readyPlayers = state.players.map((player, idx) => ({
+        ...player,
+        name: player.name?.trim() || `Player ${idx + 1}`,
+        alive: true
+      }));
+      const roles = assignRoles(readyPlayers, state.settings);
       const word = pickWord(state.settings.categories, state.usedWords, state.customWords);
       const wordKey = `${word.category}:${word.word}`;
       return {
@@ -228,12 +236,12 @@ function SectionHeading({ eyebrow, title, text, action }) { return <div classNam
 function SetupScreen({ state, dispatch }) {
   const [customWord, setCustomWord] = useState({ word: '', hint: '', hardHint: '' });
   const [showHow, setShowHow] = useState(false);
-  const canDeal = state.players.every((player) => player.name.trim()) && state.settings.categories.length > 0;
+  const canDeal = state.settings.categories.length > 0;
   const addCustom = () => {
     if (customWord.word.trim().length < 2 || customWord.hint.trim().length < 2) { dispatch({ type: 'SET_TOAST', toast: { message: 'Add a word and a related one-word hint first.', tone: 'danger' } }); return; }
     dispatch({ type: 'ADD_CUSTOM_WORD', entry: createCustomEntry(customWord.word, customWord.hint, customWord.hardHint) }); setCustomWord({ word: '', hint: '', hardHint: '' });
   };
-  return <main className="page setup-page"><section className="hero-copy"><span className="eyebrow">PASS-AND-PLAY • 3–12 PLAYERS</span><h1>Someone is bluffing.<br /><em>Make them sweat.</em></h1><p className="hero-lede">A social word-deduction game for friends who can’t keep a straight face. One shared screen. One secret word. Plenty of suspicious clues.</p><div className="hero-actions"><Button icon="✦" onClick={() => document.getElementById('players-panel')?.scrollIntoView({ behavior: 'smooth' })}>Set up the game</Button><button className="text-button" onClick={() => setShowHow((value) => !value)}>How to play <span>{showHow ? '↑' : '↓'}</span></button></div><div className="alert-card"><span className="alert-icon">!</span><div><strong>Pass the screen, keep the secret.</strong><p>Only the current player should peek at their role card.</p></div></div><div className="orbit-art" aria-hidden="true"><div className="planet planet-large">◒</div><div className="planet planet-small">✦</div><div className="orbit-ring ring-one" /><div className="orbit-ring ring-two" /><span className="orbit-star star-one">✦</span><span className="orbit-star star-two">·</span><span className="orbit-star star-three">✧</span></div>{showHow ? <Panel className="how-panel"><div className="how-step"><span>01</span><div><strong>Deal the secrets</strong><p>Everyone sees a role card. Crew sees the word; imposters only get a hint.</p></div></div><div className="how-step"><span>02</span><div><strong>Trade suspicious clues</strong><p>Give one clue each, then debate which player is faking it.</p></div></div><div className="how-step"><span>03</span><div><strong>Vote someone into space</strong><p>Eject imposters before they reach parity with the crew.</p></div></div></Panel> : null}</section><section id="players-panel" className="setup-cockpit"><DemoRoomPanel state={state} dispatch={dispatch} /><Panel className="players-panel"><SectionHeading eyebrow="Before we start" title="Who’s playing?" text="Add 3–12 players. The screen will be passed around during dealing." action={<button className="text-button" onClick={() => dispatch({ type: 'SHUFFLE_SEATS' })}>Shuffle seating ↻</button>} /><div className="player-list">{state.players.map((player, index) => <label className="player-input" key={player.id}><span className="player-index">{String(index + 1).padStart(2, '0')}</span><input value={player.name} maxLength={18} onChange={(event) => dispatch({ type: 'SET_NAME', id: player.id, value: event.target.value })} aria-label={`Player ${index + 1} name`} /><span className="input-check">✓</span></label>)}</div><Stepper label="Players" value={state.settings.playerCount} min={MIN_PLAYERS} max={MAX_PLAYERS} onChange={(value) => dispatch({ type: 'SET_SETTING', key: 'playerCount', value })} hint="More friends, more alibis" /></Panel><Panel className="settings-panel"><SectionHeading eyebrow="Game settings" title="Make it yours" text="Every setting is saved on this device." /><div className="settings-grid"><Stepper label="Imposters" value={state.settings.imposterCount} min={1} max={maxImposters(state.settings.playerCount)} onChange={(value) => dispatch({ type: 'SET_SETTING', key: 'imposterCount', value })} hint={`Up to ${maxImposters(state.settings.playerCount)} at this crew size`} /><Toggle label="Random imposters" checked={state.settings.randomImposters} onChange={(value) => dispatch({ type: 'SET_SETTING', key: 'randomImposters', value })} hint="Keep the count unpredictable" /></div><div className="form-field"><label htmlFor="difficulty">Clue difficulty</label><select id="difficulty" value={state.settings.difficulty} onChange={(event) => dispatch({ type: 'SET_SETTING', key: 'difficulty', value: event.target.value })}><option>Easy</option><option>Medium</option><option>Hard</option></select></div><div className="form-field"><label htmlFor="timer">Discussion timer</label><select id="timer" value={state.settings.timerMinutes} onChange={(event) => dispatch({ type: 'SET_SETTING', key: 'timerMinutes', value: Number(event.target.value) })}><option value="0">Off</option><option value="1">1 minute</option><option value="2">2 minutes</option><option value="3">3 minutes</option><option value="5">5 minutes</option></select></div><div className="chip-group"><span className="field-label">Secret categories</span><div className="chips">{CATEGORY_NAMES.map((category) => <button key={category} className={`chip ${state.settings.categories.includes(category) ? 'chip-active' : ''}`} onClick={() => dispatch({ type: 'TOGGLE_CATEGORY', category })}>{category === 'Random' ? '✦ ' : ''}{category}</button>)}</div></div><div className="settings-divider" /><div className="form-field"><label htmlFor="mode">Game mode</label><select id="mode" value={state.settings.mode} onChange={(event) => dispatch({ type: 'SET_SETTING', key: 'mode', value: event.target.value })}><option>Classic</option><option>Blind Imposter</option><option>Spy Twist</option></select></div><div className="settings-grid compact"><Toggle label="Detective role" checked={state.settings.detective} onChange={(value) => dispatch({ type: 'SET_SETTING', key: 'detective', value })} hint="One question in round one" /><Toggle label="Chaos events" checked={state.settings.chaos} onChange={(value) => dispatch({ type: 'SET_SETTING', key: 'chaos', value })} hint="Surprises between rounds" /><Toggle label="Last-chance guess" checked={state.settings.lastChance} onChange={(value) => dispatch({ type: 'SET_SETTING', key: 'lastChance', value })} hint="Final imposter gets 10 seconds" /><Toggle label="Imposters know each other" checked={state.settings.impostersKnowEachOther} onChange={(value) => dispatch({ type: 'SET_SETTING', key: 'impostersKnowEachOther', value })} hint="Show their allies" /><Toggle label="Show category" checked={state.settings.showCategory} onChange={(value) => dispatch({ type: 'SET_SETTING', key: 'showCategory', value })} /><Toggle label="Show imposter count" checked={state.settings.showImposterCount} onChange={(value) => dispatch({ type: 'SET_SETTING', key: 'showImposterCount', value })} /><Toggle label="Private voting" checked={state.settings.privateVoting} onChange={(value) => dispatch({ type: 'SET_SETTING', key: 'privateVoting', value })} hint="Pass the screen for each vote" /><Toggle label="Touch & hold card" checked={state.settings.holdToReveal} onChange={(value) => dispatch({ type: 'SET_SETTING', key: 'holdToReveal', value })} hint="Hold to peek role, release to hide" /><Toggle label="Sound effects" checked={state.settings.sound} onChange={(value) => dispatch({ type: 'SET_SETTING', key: 'sound', value })} /></div><div className="form-field"><label htmlFor="tie">Tie-break rule</label><select id="tie" value={state.settings.tieRule} onChange={(event) => dispatch({ type: 'SET_SETTING', key: 'tieRule', value: event.target.value })}><option value="none">Tie = no ejection</option><option value="revote">Tie = revote</option></select></div><Button className="deal-button" icon="🚀" disabled={!canDeal} onClick={() => { if (state.settings.sound) playTone('reveal'); dispatch({ type: 'DEAL' }); }}>Deal the secrets <span className="button-arrow">→</span></Button></Panel><Panel className="custom-panel"><SectionHeading eyebrow="Make it yours" title="Add custom words" text="Create a tiny local category for inside jokes." /><div className="custom-form"><input placeholder="Secret word" value={customWord.word} onChange={(event) => setCustomWord({ ...customWord, word: event.target.value })} /><input placeholder="Easy hint" value={customWord.hint} onChange={(event) => setCustomWord({ ...customWord, hint: event.target.value })} /><input placeholder="Hard hint (optional)" value={customWord.hardHint} onChange={(event) => setCustomWord({ ...customWord, hardHint: event.target.value })} /><Button variant="secondary" onClick={addCustom}>Add to bank</Button></div>{state.customWords.length ? <p className="custom-count">{state.customWords.length} custom word{state.customWords.length === 1 ? '' : 's'} ready to deploy.</p> : null}</Panel></section></main>;
+  return <main className="page setup-page"><section className="hero-copy"><span className="eyebrow">PASS-AND-PLAY • 3–12 PLAYERS</span><h1>Someone is bluffing.<br /><em>Make them sweat.</em></h1><p className="hero-lede">A social word-deduction game for friends who can’t keep a straight face. One shared screen. One secret word. Plenty of suspicious clues.</p><div className="hero-actions"><Button icon="✦" onClick={() => document.getElementById('players-panel')?.scrollIntoView({ behavior: 'smooth' })}>Set up the game</Button><button className="text-button" onClick={() => setShowHow((value) => !value)}>How to play <span>{showHow ? '↑' : '↓'}</span></button></div><div className="alert-card"><span className="alert-icon">!</span><div><strong>Pass the screen, keep the secret.</strong><p>Only the current player should peek at their role card.</p></div></div><div className="orbit-art" aria-hidden="true"><div className="planet planet-large">◒</div><div className="planet planet-small">✦</div><div className="orbit-ring ring-one" /><div className="orbit-ring ring-two" /><span className="orbit-star star-one">✦</span><span className="orbit-star star-two">·</span><span className="orbit-star star-three">✧</span></div>{showHow ? <Panel className="how-panel"><div className="how-step"><span>01</span><div><strong>Deal the secrets</strong><p>Everyone sees a role card. Crew sees the word; imposters only get a hint.</p></div></div><div className="how-step"><span>02</span><div><strong>Trade suspicious clues</strong><p>Give one clue each, then debate which player is faking it.</p></div></div><div className="how-step"><span>03</span><div><strong>Vote someone into space</strong><p>Eject imposters before they reach parity with the crew.</p></div></div></Panel> : null}</section><section id="players-panel" className="setup-cockpit"><DemoRoomPanel state={state} dispatch={dispatch} /><Panel className="players-panel"><SectionHeading eyebrow="Before we start" title="Who’s playing?" text="Add 3–12 players. The screen will be passed around during dealing." action={<button className="text-button" onClick={() => dispatch({ type: 'SHUFFLE_SEATS' })}>Shuffle seating ↻</button>} /><div className="player-list">{state.players.map((player, index) => <label className="player-input" key={player.id}><span className="player-index">{String(index + 1).padStart(2, '0')}</span><input className="player-name-input" value={player.name} placeholder={`Player ${index + 1}`} maxLength={18} onChange={(event) => dispatch({ type: 'SET_NAME', id: player.id, value: event.target.value })} aria-label={`Player ${index + 1} name`} /><span className="input-check">✓</span></label>)}</div><Stepper label="Players" value={state.settings.playerCount} min={MIN_PLAYERS} max={MAX_PLAYERS} onChange={(value) => dispatch({ type: 'SET_SETTING', key: 'playerCount', value })} hint="More friends, more alibis" /></Panel><Panel className="settings-panel"><SectionHeading eyebrow="Game settings" title="Make it yours" text="Every setting is saved on this device." /><div className="settings-grid"><Stepper label="Imposters" value={state.settings.imposterCount} min={1} max={maxImposters(state.settings.playerCount)} onChange={(value) => dispatch({ type: 'SET_SETTING', key: 'imposterCount', value })} hint={`Up to ${maxImposters(state.settings.playerCount)} at this crew size`} /><Toggle label="Random imposters" checked={state.settings.randomImposters} onChange={(value) => dispatch({ type: 'SET_SETTING', key: 'randomImposters', value })} hint="Keep the count unpredictable" /></div><div className="form-field"><label htmlFor="difficulty">Clue difficulty</label><select id="difficulty" value={state.settings.difficulty} onChange={(event) => dispatch({ type: 'SET_SETTING', key: 'difficulty', value: event.target.value })}><option>Easy</option><option>Medium</option><option>Hard</option></select></div><div className="form-field"><label htmlFor="timer">Discussion timer</label><select id="timer" value={state.settings.timerMinutes} onChange={(event) => dispatch({ type: 'SET_SETTING', key: 'timerMinutes', value: Number(event.target.value) })}><option value="0">Off</option><option value="1">1 minute</option><option value="2">2 minutes</option><option value="3">3 minutes</option><option value="5">5 minutes</option></select></div><div className="chip-group"><span className="field-label">Secret categories</span><div className="chips">{CATEGORY_NAMES.map((category) => <button key={category} className={`chip ${state.settings.categories.includes(category) ? 'chip-active' : ''}`} onClick={() => dispatch({ type: 'TOGGLE_CATEGORY', category })}>{category === 'Random' ? '✦ ' : ''}{category}</button>)}</div></div><div className="settings-divider" /><div className="form-field"><label htmlFor="mode">Game mode</label><select id="mode" value={state.settings.mode} onChange={(event) => dispatch({ type: 'SET_SETTING', key: 'mode', value: event.target.value })}><option>Classic</option><option>Blind Imposter</option><option>Spy Twist</option></select></div><div className="settings-grid compact"><Toggle label="Detective role" checked={state.settings.detective} onChange={(value) => dispatch({ type: 'SET_SETTING', key: 'detective', value })} hint="One question in round one" /><Toggle label="Chaos events" checked={state.settings.chaos} onChange={(value) => dispatch({ type: 'SET_SETTING', key: 'chaos', value })} hint="Surprises between rounds" /><Toggle label="Last-chance guess" checked={state.settings.lastChance} onChange={(value) => dispatch({ type: 'SET_SETTING', key: 'lastChance', value })} hint="Final imposter gets 10 seconds" /><Toggle label="Imposters know each other" checked={state.settings.impostersKnowEachOther} onChange={(value) => dispatch({ type: 'SET_SETTING', key: 'impostersKnowEachOther', value })} hint="Show their allies" /><Toggle label="Show category" checked={state.settings.showCategory} onChange={(value) => dispatch({ type: 'SET_SETTING', key: 'showCategory', value })} /><Toggle label="Show imposter count" checked={state.settings.showImposterCount} onChange={(value) => dispatch({ type: 'SET_SETTING', key: 'showImposterCount', value })} /><Toggle label="Private voting" checked={state.settings.privateVoting} onChange={(value) => dispatch({ type: 'SET_SETTING', key: 'privateVoting', value })} hint="Pass the screen for each vote" /><Toggle label="Touch & hold card" checked={state.settings.holdToReveal} onChange={(value) => dispatch({ type: 'SET_SETTING', key: 'holdToReveal', value })} hint="Hold to peek role, release to hide" /><Toggle label="Sound effects" checked={state.settings.sound} onChange={(value) => dispatch({ type: 'SET_SETTING', key: 'sound', value })} /></div><div className="form-field"><label htmlFor="tie">Tie-break rule</label><select id="tie" value={state.settings.tieRule} onChange={(event) => dispatch({ type: 'SET_SETTING', key: 'tieRule', value: event.target.value })}><option value="none">Tie = no ejection</option><option value="revote">Tie = revote</option></select></div><Button className="deal-button" icon="🚀" disabled={!canDeal} onClick={() => { if (state.settings.sound) playTone('reveal'); dispatch({ type: 'DEAL' }); }}>Deal the secrets <span className="button-arrow">→</span></Button></Panel><Panel className="custom-panel"><SectionHeading eyebrow="Make it yours" title="Add custom words" text="Create a tiny local category for inside jokes." /><div className="custom-form"><input placeholder="Secret word" value={customWord.word} onChange={(event) => setCustomWord({ ...customWord, word: event.target.value })} /><input placeholder="Easy hint" value={customWord.hint} onChange={(event) => setCustomWord({ ...customWord, hint: event.target.value })} /><input placeholder="Hard hint (optional)" value={customWord.hardHint} onChange={(event) => setCustomWord({ ...customWord, hardHint: event.target.value })} /><Button variant="secondary" onClick={addCustom}>Add to bank</Button></div>{state.customWords.length ? <p className="custom-count">{state.customWords.length} custom word{state.customWords.length === 1 ? '' : 's'} ready to deploy.</p> : null}</Panel></section></main>;
 }
 
 function PhaseRail({ state }) { const phases = ['DEALING', 'DISCUSSION', 'VOTING', 'EJECTION']; return <div className="phase-rail">{phases.map((phase, index) => <div key={phase} className={`phase-step ${state.phase === phase ? 'current' : ''} ${phases.indexOf(state.phase) > index ? 'done' : ''}`}><span>{String(index + 1).padStart(2, '0')}</span>{phase}</div>)}</div>; }
@@ -242,6 +250,8 @@ function DealScreen({ state, dispatch }) {
   const player = state.players[state.dealingIndex];
   const nextPlayer = state.players[state.dealingIndex + 1];
   const isLastCard = state.dealingIndex >= state.players.length - 1;
+  const playerName = player?.name?.trim() || `Player ${state.dealingIndex + 1}`;
+  const nextPlayerName = nextPlayer?.name?.trim() || `Player ${state.dealingIndex + 2}`;
   const roleCard = player && state.word ? displayForPlayer(player, state.word, state.settings, state.players) : null;
 
   const [isHolding, setIsHolding] = useState(false);
@@ -334,7 +344,7 @@ function DealScreen({ state, dispatch }) {
       if (state.settings.sound) playTone('danger');
       dispatch({
         type: 'SET_TOAST',
-        toast: { message: `Touch and hold the card to reveal ${player.name}'s role first!`, tone: 'warning' }
+        toast: { message: `Touch and hold the card to reveal ${playerName}’s role first!`, tone: 'warning' }
       });
       return;
     }
@@ -367,7 +377,7 @@ function DealScreen({ state, dispatch }) {
             className={`deal-card-3d ${isFlipped ? 'is-flipped' : ''} ${isHolding ? 'is-holding' : ''}`}
             tabIndex={0}
             role="button"
-            aria-label={isFlipped ? "Secret identity revealed. Release hold to flip back." : `Cover card for ${player.name}. Touch and hold to reveal identity.`}
+            aria-label={isFlipped ? "Secret identity revealed. Release hold to flip back." : `Cover card for ${playerName}. Touch and hold to reveal identity.`}
             onPointerDown={handlePointerDown}
             onPointerUp={handlePointerUp}
             onPointerCancel={handlePointerUp}
@@ -384,7 +394,7 @@ function DealScreen({ state, dispatch }) {
 
               <div className="cover-player-section">
                 <span className="eyebrow cover-eyebrow">Hand device to</span>
-                <h1 className="cover-player-name">{player.name}</h1>
+                <h1 className="cover-player-name">{playerName}</h1>
                 <div className="cover-avatar-wrap">
                   <Avatar player={player} size="lg" />
                 </div>
@@ -428,7 +438,7 @@ function DealScreen({ state, dispatch }) {
                 {/* PROMINENT PLAYER NAME */}
                 <div className="reveal-player-badge">
                   <span className="reveal-player-label">Secret role for</span>
-                  <h2 className="reveal-player-name">{player.name}</h2>
+                  <h2 className="reveal-player-name">{playerName}</h2>
                 </div>
 
                 <div className={`role-hero-title role-hero-${roleCard.tone}`}>
@@ -470,7 +480,7 @@ function DealScreen({ state, dispatch }) {
           >
             {isLastCard
               ? 'Everyone ready • Start discussion →'
-              : `Done • Pass to ${nextPlayer?.name || 'next player'} →`}
+              : `Done • Pass to ${nextPlayerName} →`}
           </Button>
 
           <div className={`deal-status-hint ${hasViewed ? 'is-viewed' : ''}`}>
@@ -505,24 +515,142 @@ function DealScreen({ state, dispatch }) {
 function DiscussionScreen({ state, dispatch }) {
   const living = state.players.filter((player) => player.alive);
   const first = state.players.find((player) => player.id === state.firstSpeakerId) || living[0];
+  const firstName = first?.name?.trim() || 'Player 1';
   const prompts = ['Give a one-word clue.', 'Describe it without saying what it is.', 'What would you find near it?'];
-  return <main className="page play-page"><PhaseRail state={state} /><SectionHeading eyebrow={`Round ${state.round} • Discussion`} title="Trade clues. Read the room." text="Everyone gives one clue. The first speaker sets the temperature." action={state.settings.timerMinutes > 0 ? <div className={`timer ${state.timerSeconds <= 10 && state.timerSeconds > 0 ? 'timer-danger' : ''} ${state.timerSeconds === 0 ? 'timer-done' : ''}`}><span>◷</span><strong>{state.timerSeconds === 0 ? 'TIME’S UP' : formatTime(state.timerSeconds)}</strong><div><button onClick={() => dispatch({ type: 'TOGGLE_TIMER' })}>{state.timerRunning ? 'Pause' : 'Start'}</button><button onClick={() => dispatch({ type: 'ADD_TIME' })}>+30s</button></div></div> : <Badge tone="neutral">Timer off</Badge>} />{state.chaosEvent ? <Panel className="chaos-card"><span className="chaos-icon">✹</span><div><span className="eyebrow">Chaos event</span><h3>{state.chaosEvent}</h3></div><Badge tone="warning">This round</Badge></Panel> : null}<div className="discussion-grid"><Panel className="speaker-panel"><div className="panel-title-row"><div><span className="eyebrow">Speaking order</span><h3>Who goes first?</h3></div><Badge tone="crew">{first?.name}</Badge></div><div className="speaker-list">{living.map((player, index) => <div className={`speaker-row ${player.id === first?.id ? 'speaker-first' : ''}`} key={player.id}><span className="speaker-number">{index + 1}</span><Avatar player={player} size="sm" /><strong>{player.name}</strong>{player.id === first?.id ? <Badge tone="crew">First clue</Badge> : null}</div>)}</div></Panel><div className="prompt-stack">{prompts.map((prompt, index) => <Panel className="prompt-card" key={prompt}><span className="prompt-number">0{index + 1}</span><p>{prompt}</p><span className="prompt-arrow">↗</span></Panel>)}<Button className="full-button" icon="⚖" onClick={() => dispatch({ type: 'START_VOTING' })}>Start voting <span className="button-arrow">→</span></Button></div></div></main>;
+  return (
+    <main className="page play-page">
+      <PhaseRail state={state} />
+      <SectionHeading
+        eyebrow={`Round ${state.round} • Discussion`}
+        title="Trade clues. Read the room."
+        text="Everyone gives one clue. The first speaker sets the temperature."
+        action={state.settings.timerMinutes > 0 ? (
+          <div className={`timer ${state.timerSeconds <= 10 && state.timerSeconds > 0 ? 'timer-danger' : ''} ${state.timerSeconds === 0 ? 'timer-done' : ''}`}>
+            <span>◷</span>
+            <strong>{state.timerSeconds === 0 ? 'TIME’S UP' : formatTime(state.timerSeconds)}</strong>
+            <div>
+              <button onClick={() => dispatch({ type: 'TOGGLE_TIMER' })}>{state.timerRunning ? 'Pause' : 'Start'}</button>
+              <button onClick={() => dispatch({ type: 'ADD_TIME' })}>+30s</button>
+            </div>
+          </div>
+        ) : <Badge tone="neutral">Timer off</Badge>}
+      />
+      {state.chaosEvent ? (
+        <Panel className="chaos-card">
+          <span className="chaos-icon">✹</span>
+          <div><span className="eyebrow">Chaos event</span><h3>{state.chaosEvent}</h3></div>
+          <Badge tone="warning">This round</Badge>
+        </Panel>
+      ) : null}
+      <div className="discussion-grid">
+        <Panel className="speaker-panel">
+          <div className="panel-title-row">
+            <div><span className="eyebrow">Speaking order</span><h3>Who goes first?</h3></div>
+            <Badge tone="crew">{firstName}</Badge>
+          </div>
+          <div className="speaker-list">
+            {living.map((player, index) => {
+              const pName = player.name?.trim() || `Player ${index + 1}`;
+              return (
+                <div className={`speaker-row ${player.id === first?.id ? 'speaker-first' : ''}`} key={player.id}>
+                  <span className="speaker-number">{index + 1}</span>
+                  <Avatar player={player} size="sm" />
+                  <strong className="speaker-player-name">{pName}</strong>
+                  {player.id === first?.id ? <Badge tone="crew">First clue</Badge> : null}
+                </div>
+              );
+            })}
+          </div>
+        </Panel>
+        <div className="prompt-stack">
+          {prompts.map((prompt, index) => (
+            <Panel className="prompt-card" key={prompt}>
+              <span className="prompt-number">0{index + 1}</span>
+              <p>{prompt}</p>
+              <span className="prompt-arrow">↗</span>
+            </Panel>
+          ))}
+          <Button className="full-button" icon="⚖" onClick={() => dispatch({ type: 'START_VOTING' })}>
+            Start voting <span className="button-arrow">→</span>
+          </Button>
+        </div>
+      </div>
+    </main>
+  );
 }
 
 function VotingScreen({ state, dispatch }) {
   const living = state.players.filter((player) => player.alive);
   const currentVoter = living[state.privateVoteIndex];
+  const voterName = currentVoter?.name?.trim() || `Player ${state.privateVoteIndex + 1}`;
   const [confirmOpen, setConfirmOpen] = useState(false);
   const selectedPlayer = state.players.find((player) => player.id === state.selectedVote);
+  const selectedPlayerName = selectedPlayer?.name?.trim() || 'Player';
   const submit = (id) => {
     if (state.settings.sound) playTone('vote');
-    if (state.settings.privateVoting) dispatch({ type: 'SUBMIT_PRIVATE_VOTE', id }); else { dispatch({ type: 'SUBMIT_HOST_VOTE', id }); setConfirmOpen(false); }
+    if (state.settings.privateVoting) dispatch({ type: 'SUBMIT_PRIVATE_VOTE', id });
+    else { dispatch({ type: 'SUBMIT_HOST_VOTE', id }); setConfirmOpen(false); }
   };
-  return <main className="page play-page"><PhaseRail state={state} /><SectionHeading eyebrow="The council is live" title={state.settings.privateVoting ? `Vote privately, ${currentVoter?.name}.` : 'Who is faking it?'} text={state.settings.privateVoting ? 'Pass the screen after every vote. The tally stays hidden until everyone has voted.' : 'Tap the group’s chosen player. A skip is allowed, but it gives the imposters another breath.'} action={<Badge tone="warning">{state.settings.privateVoting ? `Vote ${state.privateVoteIndex + 1} of ${living.length}` : 'Host vote'}</Badge>} />{state.revoteNotice ? <div className="notice notice-warning"><span>↻</span><div><strong>Tie vote — no signal.</strong><p>Break the tie with a private revote.</p></div></div> : null}<div className="vote-grid">{living.map((player) => <button key={player.id} className={`vote-card ${state.selectedVote === player.id ? 'vote-selected' : ''}`} onClick={() => dispatch({ type: 'SELECT_VOTE', id: player.id })}><Avatar player={player} size="lg" /><strong>{player.name}</strong><span>{player.id === state.firstSpeakerId ? 'First speaker' : 'Crew manifest'}</span><span className="vote-check">{state.selectedVote === player.id ? '✓' : '+'}</span></button>)}<button className={`vote-card vote-skip ${state.selectedVote === 'skip' ? 'vote-selected' : ''}`} onClick={() => dispatch({ type: 'SELECT_VOTE', id: 'skip' })}><span className="skip-icon">∅</span><strong>Skip vote</strong><span>No one leaves</span><span className="vote-check">{state.selectedVote === 'skip' ? '✓' : '+'}</span></button></div><div className="vote-footer"><span className="privacy-note">{state.settings.privateVoting ? 'Your choice is locked in privately.' : 'The host is the only one touching the final vote.'}</span><Button disabled={!state.selectedVote} onClick={() => { if (state.settings.privateVoting) submit(state.selectedVote); else setConfirmOpen(true); }}>{state.settings.privateVoting ? 'Lock in vote' : 'Confirm ejection'} <span className="button-arrow">→</span></Button></div>{confirmOpen ? <Modal title={selectedPlayer ? `Eject ${selectedPlayer.name}?` : 'Skip this vote?'} onClose={() => setConfirmOpen(false)} actions={<><Button variant="secondary" onClick={() => setConfirmOpen(false)}>Go back</Button><Button variant={selectedPlayer ? 'danger' : 'primary'} onClick={() => submit(state.selectedVote)}>{selectedPlayer ? 'Eject player' : 'Skip vote'}</Button></>}><p>{selectedPlayer ? 'Their role will be revealed to everyone. Make sure the group is ready for the truth.' : 'No one will be ejected this round.'}</p></Modal> : null}</main>;
+  return (
+    <main className="page play-page">
+      <PhaseRail state={state} />
+      <SectionHeading
+        eyebrow="The council is live"
+        title={state.settings.privateVoting ? `Vote privately, ${voterName}.` : 'Who is faking it?'}
+        text={state.settings.privateVoting ? 'Pass the screen after every vote. The tally stays hidden until everyone has voted.' : 'Tap the group’s chosen player. A skip is allowed, but it gives the imposters another breath.'}
+        action={<Badge tone="warning">{state.settings.privateVoting ? `Vote ${state.privateVoteIndex + 1} of ${living.length}` : 'Host vote'}</Badge>}
+      />
+      {state.revoteNotice ? (
+        <div className="notice notice-warning">
+          <span>↻</span>
+          <div><strong>Tie vote — no signal.</strong><p>Break the tie with a private revote.</p></div>
+        </div>
+      ) : null}
+      <div className="vote-grid">
+        {living.map((player, index) => {
+          const pName = player.name?.trim() || `Player ${index + 1}`;
+          return (
+            <button
+              key={player.id}
+              className={`vote-card ${state.selectedVote === player.id ? 'vote-selected' : ''}`}
+              onClick={() => dispatch({ type: 'SELECT_VOTE', id: player.id })}
+            >
+              <Avatar player={player} size="lg" />
+              <strong className="vote-player-name">{pName}</strong>
+              <span>{player.id === state.firstSpeakerId ? 'First speaker' : 'Crew manifest'}</span>
+              <span className="vote-check">{state.selectedVote === player.id ? '✓' : '+'}</span>
+            </button>
+          );
+        })}
+        <button className={`vote-card vote-skip ${state.selectedVote === 'skip' ? 'vote-selected' : ''}`} onClick={() => dispatch({ type: 'SELECT_VOTE', id: 'skip' })}>
+          <span className="skip-icon">∅</span>
+          <strong>Skip vote</strong>
+          <span>No one leaves</span>
+          <span className="vote-check">{state.selectedVote === 'skip' ? '✓' : '+'}</span>
+        </button>
+      </div>
+      <div className="vote-footer">
+        <span className="privacy-note">{state.settings.privateVoting ? 'Your choice is locked in privately.' : 'The host is the only one touching the final vote.'}</span>
+        <Button disabled={!state.selectedVote} onClick={() => { if (state.settings.privateVoting) submit(state.selectedVote); else setConfirmOpen(true); }}>
+          {state.settings.privateVoting ? 'Lock in vote' : 'Confirm ejection'} <span className="button-arrow">→</span>
+        </Button>
+      </div>
+      {confirmOpen ? (
+        <Modal
+          title={selectedPlayer ? `Eject ${selectedPlayerName}?` : 'Skip this vote?'}
+          onClose={() => setConfirmOpen(false)}
+          actions={<><Button variant="secondary" onClick={() => setConfirmOpen(false)}>Go back</Button><Button variant={selectedPlayer ? 'danger' : 'primary'} onClick={() => submit(state.selectedVote)}>{selectedPlayer ? 'Eject player' : 'Skip vote'}</Button></>}
+        >
+          <p>{selectedPlayer ? `${selectedPlayerName}’s role will be revealed to everyone. Make sure the group is ready for the truth.` : 'No one will be ejected this round.'}</p>
+        </Modal>
+      ) : null}
+    </main>
+  );
 }
 
 function EjectionScreen({ state, dispatch }) {
   const target = state.players.find((player) => player.id === state.lastEjectedId);
+  const targetName = target?.name?.trim() || 'Player';
   const [guess, setGuess] = useState('');
   useEffect(() => {
     if (!state.lastChanceOpen) return undefined;
@@ -543,7 +671,44 @@ function EjectionScreen({ state, dispatch }) {
   if (!target) return <main className="page play-page"><div className="ejection-empty"><div className="eject-icon">∅</div><span className="eyebrow">Council result</span><h1>No one was ejected.</h1><p>The ship stays crowded. Everyone is still alive — for now.</p><Button onClick={() => dispatch({ type: 'CONTINUE_ROUND' })}>Continue to round {state.round + 1} <span className="button-arrow">→</span></Button></div></main>;
   const roleLabel = target.role === 'imposter' ? 'was an IMPOSTER!' : target.role === 'jester' ? 'was the JESTER!' : 'was a Crewmate…';
   const tone = target.role === 'imposter' ? 'imposter' : target.role === 'jester' ? 'jester' : 'crew';
-  return <main className="page play-page ejection-page"><div className={`ejection-spotlight tone-${tone}`}><div className="eject-ship" aria-hidden="true">🚀</div><span className="eyebrow">Ejection confirmed</span><div className="eject-avatar"><Avatar player={target} size="xl" /></div><h1>{target.name} <em>{roleLabel}</em></h1><p>{target.role === 'imposter' ? 'The crew caught a signal in the noise.' : target.role === 'jester' ? 'Exactly as planned. The Jester steals the win.' : 'The signal was clean. The suspicion was not.'}</p><div className="ejection-stat"><span>Imposters remaining</span><strong>{imposterCount}</strong></div></div>{state.lastChanceOpen ? <Panel className="last-chance-card"><div className="last-chance-timer">00:{String(state.lastChanceSeconds).padStart(2, '0')}</div><div><span className="eyebrow">Last-chance guess</span><h2>One final shot to steal the win.</h2><p>{target.name} was the final imposter. Guess the secret word before the airlock closes.</p><div className="guess-row"><input autoFocus value={guess} onChange={(event) => setGuess(event.target.value)} placeholder="Type the secret word" /><Button disabled={!guess.trim()} onClick={() => dispatch({ type: 'RESOLVE_LAST_CHANCE', success: guess.trim().toLowerCase() === state.word.word.toLowerCase() })}>Guess</Button></div></div></Panel> : null}{state.ejectionResolved && !state.lastChanceOpen ? <div className="ejection-actions">{canContinue ? <><p className="outcome-tease">{state.outcome === 'crew' ? 'Crew has the advantage.' : 'The imposters control the ship.'}</p><Button onClick={() => dispatch({ type: 'FINALIZE_RESULT' })}>See the verdict <span className="button-arrow">→</span></Button></> : <Button onClick={() => dispatch({ type: 'CONTINUE_ROUND' })}>Continue to round {state.round + 1} <span className="button-arrow">→</span></Button>}</div> : null}</main>;
+  return (
+    <main className="page play-page ejection-page">
+      <div className={`ejection-spotlight tone-${tone}`}>
+        <div className="eject-ship" aria-hidden="true">🚀</div>
+        <span className="eyebrow">Ejection confirmed</span>
+        <div className="eject-avatar"><Avatar player={target} size="xl" /></div>
+        <h1><strong className="ejected-player-name">{targetName}</strong> <em>{roleLabel}</em></h1>
+        <p>{target.role === 'imposter' ? 'The crew caught a signal in the noise.' : target.role === 'jester' ? 'Exactly as planned. The Jester steals the win.' : 'The signal was clean. The suspicion was not.'}</p>
+        <div className="ejection-stat"><span>Imposters remaining</span><strong>{imposterCount}</strong></div>
+      </div>
+      {state.lastChanceOpen ? (
+        <Panel className="last-chance-card">
+          <div className="last-chance-timer">00:{String(state.lastChanceSeconds).padStart(2, '0')}</div>
+          <div>
+            <span className="eyebrow">Last-chance guess</span>
+            <h2>One final shot to steal the win.</h2>
+            <p>{targetName} was the final imposter. Guess the secret word before the airlock closes.</p>
+            <div className="guess-row">
+              <input autoFocus value={guess} onChange={(event) => setGuess(event.target.value)} placeholder="Type the secret word" />
+              <Button disabled={!guess.trim()} onClick={() => dispatch({ type: 'RESOLVE_LAST_CHANCE', success: guess.trim().toLowerCase() === state.word.word.toLowerCase() })}>Guess</Button>
+            </div>
+          </div>
+        </Panel>
+      ) : null}
+      {state.ejectionResolved && !state.lastChanceOpen ? (
+        <div className="ejection-actions">
+          {canContinue ? (
+            <>
+              <p className="outcome-tease">{state.outcome === 'crew' ? 'Crew has the advantage.' : 'The imposters control the ship.'}</p>
+              <Button onClick={() => dispatch({ type: 'FINALIZE_RESULT' })}>See the verdict <span className="button-arrow">→</span></Button>
+            </>
+          ) : (
+            <Button onClick={() => dispatch({ type: 'CONTINUE_ROUND' })}>Continue to round {state.round + 1} <span className="button-arrow">→</span></Button>
+          )}
+        </div>
+      ) : null}
+    </main>
+  );
 }
 
 function ResultScreen({ state, dispatch, setToast }) {
@@ -551,14 +716,97 @@ function ResultScreen({ state, dispatch, setToast }) {
   const crewWon = state.outcome === 'crew';
   const jester = state.players.find((player) => player.role === 'jester' && player.id === state.lastEjectedId);
   const firstEjected = state.players.find((player) => !player.alive);
+  const firstEjectedName = firstEjected?.name?.trim() || 'Nobody';
   const mvp = [...state.players].sort((a, b) => (state.scoreboard[b.name] || 0) - (state.scoreboard[a.name] || 0))[0];
-  const share = async () => { const text = `Who is Imposter? — ${crewWon ? 'Crew wins' : 'Imposters win'}! Secret word was ${state.word.word}.`; try { await navigator.clipboard?.writeText(text); setToast({ message: 'Result copied to clipboard.', tone: 'success' }); } catch { setToast({ message: text, tone: 'info' }); } };
-  return <main className="page play-page result-page"><div className={`result-hero ${crewWon ? 'result-crew' : 'result-imposters'}`}><div className="result-sparkles" aria-hidden="true">✦ · ✧ · ✦</div><span className="eyebrow">Mission complete</span><h1>{crewWon ? 'Crew wins.' : 'Imposters win.'}</h1><p>{crewWon ? 'The signal is clear. The liars are out of the airlock.' : 'The imposters blended in until the numbers turned.'}</p></div><div className="result-grid"><Panel className="reveal-panel"><SectionHeading eyebrow="The truth" title="The secret transmission" /><div className="truth-word"><span>Secret word</span><strong>{state.word?.word}</strong><small>{state.word?.category} · Imposter hint: {state.word?.hint}</small></div><div className="role-roster">{state.players.map((player) => <div className="role-row" key={player.id}><Avatar player={player} size="sm" muted={!player.alive} /><span><strong>{player.name}</strong><small>{player.alive ? 'Survived' : 'Ejected'}</small></span><Badge tone={player.role === 'imposter' ? 'imposter' : player.role === 'jester' ? 'jester' : player.isDetective ? 'detective' : 'crew'}>{player.role === 'imposter' ? 'Imposter' : player.role === 'jester' ? 'Jester' : player.isDetective ? 'Detective' : 'Crewmate'}</Badge></div>)}</div></Panel><Panel className="stats-panel"><SectionHeading eyebrow="Flight recorder" title="The receipts" /><div className="stat-grid"><div><span>Rounds</span><strong>{state.round}</strong></div><div><span>First out</span><strong>{firstEjected?.name || 'Nobody'}</strong></div><div><span>MVP</span><strong>{mvp?.name || 'Crew'}</strong></div><div><span>Last chance</span><strong>{state.lastChanceSuccess ? 'Stolen' : jester ? 'Jester' : 'Nope'}</strong></div></div><div className="result-actions"><Button icon="🚀" onClick={() => dispatch({ type: 'PLAY_AGAIN' })}>Play again</Button><Button variant="secondary" onClick={() => dispatch({ type: 'GO_HOME' })}>Rematch settings</Button><button className="text-button" onClick={share}>Share result ↗</button></div></Panel></div></main>;
+  const mvpName = mvp?.name?.trim() || 'Crew';
+  const share = async () => {
+    const text = `Who is Imposter? — ${crewWon ? 'Crew wins' : 'Imposters win'}! Secret word was ${state.word?.word}.`;
+    try { await navigator.clipboard?.writeText(text); setToast({ message: 'Result copied to clipboard.', tone: 'success' }); }
+    catch { setToast({ message: text, tone: 'info' }); }
+  };
+  return (
+    <main className="page play-page result-page">
+      <div className={`result-hero ${crewWon ? 'result-crew' : 'result-imposters'}`}>
+        <div className="result-sparkles" aria-hidden="true">✦ · ✧ · ✦</div>
+        <span className="eyebrow">Mission complete</span>
+        <h1>{crewWon ? 'Crew wins.' : 'Imposters win.'}</h1>
+        <p>{crewWon ? 'The signal is clear. The liars are out of the airlock.' : 'The imposters blended in until the numbers turned.'}</p>
+      </div>
+      <div className="result-grid">
+        <Panel className="reveal-panel">
+          <SectionHeading eyebrow="The truth" title="The secret transmission" />
+          <div className="truth-word">
+            <span>Secret word</span>
+            <strong>{state.word?.word}</strong>
+            <small>{state.word?.category} · Imposter hint: {state.word?.hint}</small>
+          </div>
+          <div className="role-roster">
+            {state.players.map((player, index) => {
+              const pName = player.name?.trim() || `Player ${index + 1}`;
+              return (
+                <div className="role-row" key={player.id}>
+                  <Avatar player={player} size="sm" muted={!player.alive} />
+                  <span>
+                    <strong className="roster-player-name">{pName}</strong>
+                    <small>{player.alive ? 'Survived' : 'Ejected'}</small>
+                  </span>
+                  <Badge tone={player.role === 'imposter' ? 'imposter' : player.role === 'jester' ? 'jester' : player.isDetective ? 'detective' : 'crew'}>
+                    {player.role === 'imposter' ? 'Imposter' : player.role === 'jester' ? 'Jester' : player.isDetective ? 'Detective' : 'Crewmate'}
+                  </Badge>
+                </div>
+              );
+            })}
+          </div>
+        </Panel>
+        <Panel className="stats-panel">
+          <SectionHeading eyebrow="Flight recorder" title="The receipts" />
+          <div className="stat-grid">
+            <div><span>Rounds</span><strong>{state.round}</strong></div>
+            <div><span>First out</span><strong className="stat-player-name">{firstEjectedName}</strong></div>
+            <div><span>MVP</span><strong className="stat-player-name">{mvpName}</strong></div>
+            <div><span>Last chance</span><strong>{state.lastChanceSuccess ? 'Stolen' : jester ? 'Jester' : 'Nope'}</strong></div>
+          </div>
+          <div className="result-actions">
+            <Button icon="🚀" onClick={() => dispatch({ type: 'PLAY_AGAIN' })}>Play again</Button>
+            <Button variant="secondary" onClick={() => dispatch({ type: 'GO_HOME' })}>Rematch settings</Button>
+            <button className="text-button" onClick={share}>Share result ↗</button>
+          </div>
+        </Panel>
+      </div>
+    </main>
+  );
 }
 
 function ScoreboardScreen({ state, dispatch }) {
   const entries = Object.entries(state.scoreboard).sort(([, a], [, b]) => b - a);
-  return <main className="page scoreboard-page"><SectionHeading eyebrow="Across all missions" title="The scoreboard" text="Points stay on this device. Reset any time before the next game." action={<Button variant="secondary" onClick={() => dispatch({ type: 'GO_HOME' })}>Back to setup</Button>} />{entries.length ? <Panel className="leaderboard">{entries.map(([name, score], index) => <div className="leader-row" key={name}><span className="leader-rank">{String(index + 1).padStart(2, '0')}</span><span className="leader-medal">{index === 0 ? '✦' : index === 1 ? '◇' : '·'}</span><strong>{name}</strong><span className="leader-line" /><b>{score}<small> pts</small></b></div>)}<button className="text-button danger-text" onClick={() => dispatch({ type: 'RESET_SCORES' })}>Reset scoreboard</button></Panel> : <Panel><EmptyState icon="✦" title="No legends yet" text="Finish a game and the best bluffer will appear here." action={<Button onClick={() => dispatch({ type: 'GO_HOME' })}>Start a mission</Button>} /></Panel>}<div className="scoring-note"><span className="eyebrow">How points work</span><p>Crew win +1 per crewmate · Imposter win +3 per imposter · Correct vote +1 · Jester +3 · Last-chance steal +2</p></div></main>;
+  return (
+    <main className="page scoreboard-page">
+      <SectionHeading eyebrow="Across all missions" title="The scoreboard" text="Points stay on this device. Reset any time before the next game." action={<Button variant="secondary" onClick={() => dispatch({ type: 'GO_HOME' })}>Back to setup</Button>} />
+      {entries.length ? (
+        <Panel className="leaderboard">
+          {entries.map(([name, score], index) => {
+            const pName = name?.trim() || `Player ${index + 1}`;
+            return (
+              <div className="leader-row" key={`${name}-${index}`}>
+                <span className="leader-rank">{String(index + 1).padStart(2, '0')}</span>
+                <span className="leader-medal">{index === 0 ? '✦' : index === 1 ? '◇' : '·'}</span>
+                <strong className="scoreboard-player-name">{pName}</strong>
+                <span className="leader-line" />
+                <b>{score}<small> pts</small></b>
+              </div>
+            );
+          })}
+          <button className="text-button danger-text" onClick={() => dispatch({ type: 'RESET_SCORES' })}>Reset scoreboard</button>
+        </Panel>
+      ) : (
+        <Panel><EmptyState icon="✦" title="No legends yet" text="Finish a game and the best bluffer will appear here." action={<Button onClick={() => dispatch({ type: 'GO_HOME' })}>Start a mission</Button>} /></Panel>
+      )}
+      <div className="scoring-note">
+        <span className="eyebrow">How points work</span>
+        <p>Crew win +1 per crewmate · Imposter win +3 per imposter · Correct vote +1 · Jester +3 · Last-chance steal +2</p>
+      </div>
+    </main>
+  );
 }
 
 export default function App() {

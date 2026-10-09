@@ -79,7 +79,6 @@
   transform: scale(0.99);
 }
 
-/* Card Faces */
 .deal-card-face {
   position: absolute;
   inset: 0;
@@ -92,12 +91,19 @@
   flex-direction: column;
   justify-content: space-between;
   align-items: center;
-  padding: 26px 22px;
+  padding: 24px 20px;
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
   transform-style: preserve-3d;
   -webkit-transform-style: preserve-3d;
-  overflow: hidden;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.deal-card-face::-webkit-scrollbar {
+  display: none;
 }
 
 /* Holographic sheen light reflection sweep across the card on flip */
@@ -348,18 +354,191 @@
   text-shadow: 0 0 16px rgba(255, 111, 119, 0.4);
 }
 
-/* Ensure dark mode has high-contrast white text for all player names across the game */
+/* ========================================================
+   UNIVERSAL PLAYER NAME HIGH-CONTRAST VISIBILITY
+   Ensures player names are crisp, prominent & 100% visible
+   across all screens (Setup, Deal, Discussion, Voting,
+   Ejection, Result, Scoreboard) under all themes.
+   ======================================================== */
+
+.player-name-input,
+.player-input input {
+  color: #0f172a;
+  font-weight: 800;
+}
+
+.cover-player-name {
+  color: #0f172a !important;
+  font-family: Bungee, Impact, sans-serif;
+  letter-spacing: 0.02em;
+}
+
+.reveal-player-name {
+  color: #0f172a !important;
+  font-family: Bungee, Impact, sans-serif;
+}
+
+.speaker-player-name,
+.speaker-row strong {
+  color: #0f172a;
+  font-weight: 800;
+}
+
+.vote-player-name,
+.vote-card strong {
+  color: #0f172a;
+  font-weight: 800;
+}
+
+.ejected-player-name,
+.ejection-spotlight h1 strong {
+  color: #0f172a;
+  font-weight: 900;
+}
+
+.roster-player-name,
+.role-row strong {
+  color: #0f172a;
+  font-weight: 800;
+}
+
+.stat-player-name,
+.stat-grid strong {
+  color: #0f172a;
+  font-weight: 800;
+}
+
+.scoreboard-player-name,
+.leader-row strong {
+  color: #0f172a;
+  font-weight: 800;
+}
+
+/* Role-Specific High-Contrast Name Colors in Light Mode */
+.role-crew .reveal-player-name {
+  color: #0369a1 !important;
+}
+
+.role-imposter .reveal-player-name {
+  color: #b91c1c !important;
+}
+
+.role-jester .reveal-player-name {
+  color: #b45309 !important;
+}
+
+.role-detective .reveal-player-name {
+  color: #0284c7 !important;
+}
+
+/* ========================================================
+   DARK & NEON THEMES: HIGH-CONTRAST LUMINESCENT TEXT
+   ======================================================== */
+:root[data-theme='dark'] .player-name-input,
 :root[data-theme='dark'] .player-input input,
+:root[data-theme='neon'] .player-name-input,
+:root[data-theme='neon'] .player-input input,
+:root:not([data-theme='simple']) .player-name-input,
 :root:not([data-theme='simple']) .player-input input {
   color: #ffffff !important;
 }
 
-:root[data-theme='dark'] .player-name,
-:root[data-theme='dark'] .speaker-name,
-:root[data-theme='dark'] .vote-name,
-:root:not([data-theme='simple']) .player-name,
-:root:not([data-theme='simple']) .speaker-name,
-:root:not([data-theme='simple']) .vote-name {
+:root[data-theme='dark'] .cover-player-name,
+:root[data-theme='neon'] .cover-player-name,
+:root:not([data-theme='simple']) .cover-player-name {
+  color: #ffffff !important;
+  text-shadow: 0 0 24px rgba(139, 124, 255, 0.45), 0 2px 10px rgba(0, 0, 0, 0.7);
+}
+
+:root[data-theme='dark'] .reveal-player-name,
+:root[data-theme='neon'] .reveal-player-name,
+:root:not([data-theme='simple']) .reveal-player-name {
+  color: #ffffff !important;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.7);
+}
+
+:root[data-theme='dark'] .role-crew .reveal-player-name,
+:root[data-theme='neon'] .role-crew .reveal-player-name,
+:root:not([data-theme='simple']) .role-crew .reveal-player-name {
+  color: #68e6ba !important;
+  text-shadow: 0 0 18px rgba(104, 230, 186, 0.5), 0 2px 8px rgba(0, 0, 0, 0.6);
+}
+
+:root[data-theme='dark'] .role-imposter .reveal-player-name,
+:root[data-theme='neon'] .role-imposter .reveal-player-name,
+:root:not([data-theme='simple']) .role-imposter .reveal-player-name {
+  color: #ff6f77 !important;
+  text-shadow: 0 0 18px rgba(255, 111, 119, 0.5), 0 2px 8px rgba(0, 0, 0, 0.6);
+}
+
+:root[data-theme='dark'] .role-jester .reveal-player-name,
+:root[data-theme='neon'] .role-jester .reveal-player-name,
+:root:not([data-theme='simple']) .role-jester .reveal-player-name {
+  color: #ffd166 !important;
+  text-shadow: 0 0 18px rgba(255, 209, 102, 0.5), 0 2px 8px rgba(0, 0, 0, 0.6);
+}
+
+:root[data-theme='dark'] .role-detective .reveal-player-name,
+:root[data-theme='neon'] .role-detective .reveal-player-name,
+:root:not([data-theme='simple']) .role-detective .reveal-player-name {
+  color: #61dafb !important;
+  text-shadow: 0 0 18px rgba(97, 218, 251, 0.5), 0 2px 8px rgba(0, 0, 0, 0.6);
+}
+
+:root[data-theme='dark'] .speaker-player-name,
+:root[data-theme='dark'] .speaker-row strong,
+:root[data-theme='neon'] .speaker-player-name,
+:root[data-theme='neon'] .speaker-row strong,
+:root:not([data-theme='simple']) .speaker-player-name,
+:root:not([data-theme='simple']) .speaker-row strong {
+  color: #ffffff !important;
+}
+
+:root[data-theme='dark'] .vote-player-name,
+:root[data-theme='dark'] .vote-card strong,
+:root[data-theme='neon'] .vote-player-name,
+:root[data-theme='neon'] .vote-card strong,
+:root:not([data-theme='simple']) .vote-player-name,
+:root:not([data-theme='simple']) .vote-card strong {
+  color: #ffffff !important;
+}
+
+:root[data-theme='dark'] .ejected-player-name,
+:root[data-theme='dark'] .ejection-spotlight h1,
+:root[data-theme='dark'] .ejection-spotlight h1 strong,
+:root[data-theme='neon'] .ejected-player-name,
+:root[data-theme='neon'] .ejection-spotlight h1,
+:root[data-theme='neon'] .ejection-spotlight h1 strong,
+:root:not([data-theme='simple']) .ejected-player-name,
+:root:not([data-theme='simple']) .ejection-spotlight h1,
+:root:not([data-theme='simple']) .ejection-spotlight h1 strong {
+  color: #ffffff !important;
+}
+
+:root[data-theme='dark'] .roster-player-name,
+:root[data-theme='dark'] .role-row strong,
+:root[data-theme='neon'] .roster-player-name,
+:root[data-theme='neon'] .role-row strong,
+:root:not([data-theme='simple']) .roster-player-name,
+:root:not([data-theme='simple']) .role-row strong {
+  color: #ffffff !important;
+}
+
+:root[data-theme='dark'] .stat-player-name,
+:root[data-theme='dark'] .stat-grid strong,
+:root[data-theme='neon'] .stat-player-name,
+:root[data-theme='neon'] .stat-grid strong,
+:root:not([data-theme='simple']) .stat-player-name,
+:root:not([data-theme='simple']) .stat-grid strong {
+  color: #ffffff !important;
+}
+
+:root[data-theme='dark'] .scoreboard-player-name,
+:root[data-theme='dark'] .leader-row strong,
+:root[data-theme='neon'] .scoreboard-player-name,
+:root[data-theme='neon'] .leader-row strong,
+:root:not([data-theme='simple']) .scoreboard-player-name,
+:root:not([data-theme='simple']) .leader-row strong {
   color: #ffffff !important;
 }
 
