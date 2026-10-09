@@ -379,11 +379,11 @@ function DealScreen({ state, dispatch }) {
             <div className="deal-card-face deal-card-front pass-panel">
               <div className="card-reveal-header">
                 <Badge tone="neutral">Private transmission</Badge>
-                <span className="card-lock-badge">🔒 Hidden</span>
+                <span className="card-lock-badge">Hidden</span>
               </div>
 
               <div className="cover-player-section">
-                <span className="eyebrow">Hand device to</span>
+                <span className="eyebrow cover-eyebrow">Hand device to</span>
                 <h1 className="cover-player-name">{player.name}</h1>
                 <div className="cover-avatar-wrap">
                   <Avatar player={player} size="lg" />
@@ -405,10 +405,10 @@ function DealScreen({ state, dispatch }) {
 
               <div className="cover-footer-note">
                 <span className="privacy-note">
-                  {hasViewed ? 'Identity viewed ✓ · Hold again anytime to review' : 'Secret only displays while finger is held on screen'}
+                  {hasViewed ? 'Identity viewed · Hold again anytime to review' : 'Secret only displays while finger is held on screen'}
                 </span>
                 {hasViewed ? (
-                  <div className="viewed-badge">✓ Role inspected · Hidden safely</div>
+                  <div className="viewed-badge">Role inspected · Hidden safely</div>
                 ) : null}
               </div>
             </div>
@@ -417,7 +417,7 @@ function DealScreen({ state, dispatch }) {
             <div className={`deal-card-face deal-card-back secret-card role-${roleCard.tone} secret-${roleCard.tone}`}>
               <div className="card-reveal-header">
                 <span className={`role-pill role-pill-${roleCard.tone}`}>
-                  {roleCard.tone === 'imposter' ? '👾 Threat Signal' : roleCard.tone === 'crew' ? '🧑‍🚀 Crew Signal' : '✦ Special Role'}
+                  {roleCard.tone === 'imposter' ? 'Threat Signal' : roleCard.tone === 'crew' ? 'Crew Signal' : 'Special Role'}
                 </span>
                 <span className="live-peek-indicator">
                   <span className="pulse-dot" /> {isLocked ? 'Pinned Open' : 'Live Peek'}
@@ -425,6 +425,12 @@ function DealScreen({ state, dispatch }) {
               </div>
 
               <div className="role-reveal-body">
+                {/* PROMINENT PLAYER NAME */}
+                <div className="reveal-player-badge">
+                  <span className="reveal-player-label">Secret role for</span>
+                  <h2 className="reveal-player-name">{player.name}</h2>
+                </div>
+
                 <div className={`role-hero-title role-hero-${roleCard.tone}`}>
                   {roleCard.title}
                 </div>
@@ -447,7 +453,7 @@ function DealScreen({ state, dispatch }) {
               </div>
 
               <div className="release-cue-banner">
-                <span>✋</span> {isLocked ? 'Pinned open · Click toggle below to hide' : 'Release hold to flip back & hide secret'}
+                {isLocked ? 'Pinned open · Click toggle below to hide' : 'Release hold to flip back & hide secret'}
               </div>
             </div>
           </div>

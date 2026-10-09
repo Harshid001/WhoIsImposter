@@ -17,11 +17,28 @@
   --glow: 0 0 24px rgba(49, 95, 214, .1);
 }
 
+:root[data-theme='dark'] {
+  --bg: #080b1b;
+  --bg-elevated: #10152b;
+  --panel: rgba(21, 26, 53, .85);
+  --panel-strong: rgba(28, 33, 66, .95);
+  --line: rgba(194, 185, 255, .16);
+  --line-strong: rgba(194, 185, 255, .3);
+  --text: #f6f3ff;
+  --muted: #9da2c1;
+  --subtle: #707798;
+  --violet: #8b7cff;
+  --pink: #ff5d9e;
+  --mint: #68e6ba;
+  --coral: #ff6f77;
+  --gold: #ffd166;
+}
+
 html, body { background: var(--bg); color: var(--text); }
 .app-shell {
   min-height: 100vh;
   overflow-x: hidden;
-  background: #f5f7fb;
+  background: var(--bg);
   animation: none;
 }
 .space-backdrop, .orbit-art { display: none; }
