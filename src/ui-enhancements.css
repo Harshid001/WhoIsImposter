@@ -1,0 +1,269 @@
+:root {
+  --display: 'Space Grotesk', ui-sans-serif, system-ui, sans-serif;
+  --body: 'DM Sans', ui-sans-serif, system-ui, sans-serif;
+  --serif: 'Fraunces', Georgia, serif;
+  --ease-out: cubic-bezier(.22, 1, .36, 1);
+  --ease-spring: cubic-bezier(.2, .8, .2, 1.18);
+  --ease-soft: cubic-bezier(.37, 0, .63, 1);
+}
+
+body, button, input, select, textarea {
+  font-family: var(--body);
+}
+
+h1, h2, h3,
+.brand strong,
+.deal-meta strong,
+.timer strong,
+.secret-word,
+.truth-word strong,
+.leader-row b,
+.last-chance-timer {
+  font-family: var(--display);
+  font-weight: 700;
+  letter-spacing: -.055em;
+}
+
+.hero-copy h1 em {
+  font-family: var(--serif);
+  font-weight: 600;
+  letter-spacing: -.075em;
+}
+
+.app-shell {
+  background:
+    radial-gradient(circle at 8% -5%, rgba(139, 124, 255, .21), transparent 32rem),
+    radial-gradient(circle at 92% 22%, rgba(255, 93, 158, .14), transparent 28rem),
+    linear-gradient(120deg, #080b1b 0%, #0b1025 48%, #090c20 100%);
+  animation: atmosphere-breathe 14s ease-in-out infinite alternate;
+}
+
+.topbar {
+  animation: fade-down .72s var(--ease-out) both;
+}
+
+.brand-orbit {
+  animation: orbit-wobble 7s var(--ease-soft) infinite;
+  transition: transform .45s var(--ease-spring), box-shadow .35s ease, color .35s ease;
+}
+
+.brand:hover .brand-orbit {
+  transform: rotate(135deg) scale(1.08);
+  color: var(--pink);
+  box-shadow: 0 0 30px rgba(255, 93, 158, .46);
+}
+
+.page {
+  animation: page-arrive .72s var(--ease-out) both;
+}
+
+.hero-copy {
+  animation: hero-arrive .8s .08s var(--ease-out) both;
+}
+
+.setup-cockpit > * {
+  animation: panel-arrive .7s var(--ease-out) both;
+}
+.setup-cockpit > *:nth-child(1) { animation-delay: .12s; }
+.setup-cockpit > *:nth-child(2) { animation-delay: .2s; }
+.setup-cockpit > *:nth-child(3) { animation-delay: .28s; }
+
+.glass-panel {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  transition: border-color .45s ease, box-shadow .45s ease, transform .45s var(--ease-out), background .45s ease;
+}
+
+.glass-panel::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  opacity: .7;
+  background: linear-gradient(115deg, rgba(255, 255, 255, .075), transparent 25%, transparent 70%, rgba(139, 124, 255, .055));
+  transform: translateX(-105%);
+  transition: transform .9s var(--ease-out);
+}
+
+.glass-panel:hover {
+  border-color: rgba(194, 185, 255, .27);
+  box-shadow: 0 22px 82px rgba(0, 0, 0, .37), 0 0 28px rgba(139, 124, 255, .08);
+}
+.glass-panel:hover::before { transform: translateX(105%); }
+
+.section-heading {
+  animation: fade-up .62s .16s var(--ease-out) both;
+}
+
+.button {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  transition: transform .28s var(--ease-spring), box-shadow .32s ease, filter .28s ease, border-color .28s ease;
+}
+.button::after {
+  content: '';
+  position: absolute;
+  top: -80%;
+  left: -34%;
+  width: 28%;
+  height: 260%;
+  z-index: -1;
+  opacity: 0;
+  background: rgba(255, 255, 255, .28);
+  transform: rotate(22deg) translateX(-30%);
+  transition: transform .7s var(--ease-out), opacity .2s ease;
+}
+.button:hover:not(:disabled)::after { opacity: 1; transform: rotate(22deg) translateX(470%); }
+.button:active:not(:disabled) { transform: translateY(1px) scale(.975); filter: saturate(1.18); }
+.button-primary { box-shadow: 0 12px 30px rgba(139, 124, 255, .22), inset 0 1px 0 rgba(255,255,255,.2); }
+.button-primary:hover:not(:disabled) { box-shadow: 0 17px 38px rgba(255, 93, 158, .28), 0 0 24px rgba(139, 124, 255, .18); }
+
+.text-button, .score-link, .icon-button, .chip, .stepper button, .timer button {
+  transition: color .25s ease, background .25s ease, border-color .25s ease, transform .25s var(--ease-spring), box-shadow .25s ease;
+}
+.text-button:hover, .score-link:hover { transform: translateY(-1px); }
+.icon-button:hover { color: var(--text); border-color: var(--violet); background: rgba(139,124,255,.12); transform: rotate(12deg) scale(1.05); }
+.stepper button:hover { color: var(--violet); border-color: var(--violet); transform: scale(1.1); box-shadow: 0 0 16px rgba(139,124,255,.18); }
+
+.player-input, .form-field, .toggle-row, .chip, .speaker-row, .role-row, .stat-grid > div, .leader-row {
+  animation: fade-up .55s var(--ease-out) both;
+}
+.player-list .player-input:nth-child(1) { animation-delay: .14s; }
+.player-list .player-input:nth-child(2) { animation-delay: .18s; }
+.player-list .player-input:nth-child(3) { animation-delay: .22s; }
+.player-list .player-input:nth-child(4) { animation-delay: .26s; }
+.player-list .player-input:nth-child(5) { animation-delay: .3s; }
+.player-list .player-input:nth-child(6) { animation-delay: .34s; }
+.player-input { transition: transform .3s var(--ease-spring), border-color .25s ease, background .25s ease, box-shadow .3s ease; }
+.player-input:hover { transform: translateX(3px); border-color: rgba(139,124,255,.42); box-shadow: 0 8px 24px rgba(0,0,0,.18); }
+.player-input .avatar { transition: transform .35s var(--ease-spring), box-shadow .35s ease; }
+.player-input:hover .avatar { transform: rotate(-8deg) scale(1.08); box-shadow: inset 0 1px 0 rgba(255,255,255,.4), 0 0 18px color-mix(in srgb, var(--avatar-color), transparent 48%); }
+
+.chip { animation-delay: .22s; }
+.chip:hover { color: var(--text); border-color: var(--violet); background: rgba(139,124,255,.14); transform: translateY(-2px); }
+.chip-active { animation: chip-pop .35s var(--ease-spring) both; }
+
+.orbit-art { animation: art-arrive .9s .36s var(--ease-out) both; transform-origin: 50% 50%; }
+.planet-large { animation: planet-breathe 6s ease-in-out infinite; }
+.planet-small { animation: moon-drift 8s var(--ease-soft) infinite; }
+.ring-one { animation: ring-spin 18s linear infinite; }
+.ring-two { animation: ring-spin-reverse 24s linear infinite; }
+.orbit-star { animation: star-dance 4.2s var(--ease-soft) infinite; }
+
+.phase-rail { animation: fade-up .6s var(--ease-out) both; }
+.phase-step { transition: color .35s ease, border-color .35s ease, background .35s ease, transform .35s var(--ease-spring); }
+.phase-step:hover { transform: translateY(-2px); color: var(--text); }
+.phase-step.current { animation: phase-pulse 2.6s ease-in-out infinite; }
+
+.pass-panel, .secret-card, .ejection-spotlight, .result-hero, .notice, .chaos-card, .last-chance-card, .ejection-empty {
+  animation: cinematic-in .78s var(--ease-out) both;
+}
+.pass-orbit { animation: floaty 4s ease-in-out infinite, halo-pulse 3s ease-in-out infinite; }
+.secret-card { position: relative; overflow: hidden; transform-style: preserve-3d; }
+.secret-card::after, .result-hero::after, .ejection-spotlight::after {
+  content: '';
+  position: absolute;
+  top: -40%;
+  left: -45%;
+  width: 35%;
+  height: 180%;
+  pointer-events: none;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,.11), transparent);
+  transform: rotate(20deg);
+  animation: sheen 6s 1.1s var(--ease-soft) infinite;
+}
+.secret-word { animation: word-arrive .6s .22s var(--ease-spring) both; }
+.secret-card .avatar, .eject-avatar { animation: avatar-pop .65s .1s var(--ease-spring) both; }
+
+.timer { transition: border-color .3s ease, background .3s ease, transform .3s var(--ease-spring); }
+.timer:hover { transform: translateY(-2px); background: rgba(139,124,255,.08); }
+.timer-danger { animation: danger-pulse 1s infinite, timer-shake .42s .58s both; }
+
+.chaos-card { animation-delay: .16s; }
+.chaos-icon { animation: chaos-wiggle 3s ease-in-out infinite; }
+.prompt-card { transition: transform .32s var(--ease-spring), border-color .3s ease, background .3s ease, box-shadow .3s ease; animation: prompt-arrive .55s var(--ease-out) both; }
+.prompt-card:nth-child(2) { animation-delay: .08s; }
+.prompt-card:nth-child(3) { animation-delay: .16s; }
+.prompt-card:hover { transform: translateX(5px); border-color: rgba(139,124,255,.42); background: rgba(139,124,255,.08); box-shadow: 0 12px 25px rgba(0,0,0,.18); }
+.prompt-card:hover .prompt-arrow { transform: translate(3px, -3px); color: var(--pink); }
+.prompt-arrow { transition: transform .3s var(--ease-spring), color .3s ease; }
+
+.vote-card { animation: card-rise .55s var(--ease-out) both; transition: transform .3s var(--ease-spring), border-color .28s ease, background .28s ease, box-shadow .3s ease; }
+.vote-card:nth-child(1) { animation-delay: .05s; }.vote-card:nth-child(2) { animation-delay: .1s; }.vote-card:nth-child(3) { animation-delay: .15s; }.vote-card:nth-child(4) { animation-delay: .2s; }.vote-card:nth-child(5) { animation-delay: .25s; }.vote-card:nth-child(6) { animation-delay: .3s; }
+.vote-card:hover { box-shadow: 0 13px 28px rgba(0,0,0,.2); }
+.vote-card:active { transform: scale(.97); }
+.vote-card .avatar { transition: transform .35s var(--ease-spring); }
+.vote-card:hover .avatar { transform: translateY(-4px) rotate(-5deg); }
+.vote-card.vote-selected { animation: selected-thump .4s var(--ease-spring) both; }
+
+.modal-backdrop { animation: backdrop-in .25s ease both; }
+.modal { animation: modal-arrive .5s var(--ease-spring) both; }
+
+.eject-ship { animation: ship-drift 4.5s ease-in-out infinite, ship-glow 2.5s ease-in-out infinite; }
+.ejection-stat { animation: fade-up .7s .45s var(--ease-out) both; }
+.last-chance-card { animation-delay: .28s; }
+.last-chance-timer { animation: countdown-pulse 1s ease-in-out infinite; }
+.result-hero { animation-delay: .08s; }
+.result-hero h1 { animation: title-bloom .8s .2s var(--ease-spring) both; }
+.result-grid > * { animation: panel-arrive .7s var(--ease-out) both; }
+.result-grid > *:nth-child(2) { animation-delay: .12s; }
+.truth-word { animation: truth-glow 3.2s .6s ease-in-out infinite alternate; }
+.role-row:hover, .leader-row:hover { background: rgba(139,124,255,.055); transform: translateX(3px); }
+.role-row, .leader-row { transition: background .25s ease, transform .3s var(--ease-spring); }
+
+.toast { animation: toast-arrive .5s var(--ease-spring) both; }
+.site-footer { animation: fade-up .8s .28s var(--ease-out) both; }
+
+@keyframes atmosphere-breathe { from { background-position: 0 0, 0 0, 0 0; } to { background-position: 4% 2%, -3% 5%, 0 0; } }
+@keyframes fade-down { from { opacity: 0; transform: translateY(-12px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes page-arrive { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes hero-arrive { from { opacity: 0; transform: translateX(-18px); } to { opacity: 1; transform: translateX(0); } }
+@keyframes panel-arrive { from { opacity: 0; transform: translateY(18px) scale(.985); } to { opacity: 1; transform: translateY(0) scale(1); } }
+@keyframes fade-up { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes art-arrive { from { opacity: 0; transform: scale(.86) rotate(-5deg); } to { opacity: 1; transform: scale(1) rotate(0); } }
+@keyframes orbit-wobble { 0%, 100% { transform: rotate(-30deg); } 50% { transform: rotate(-8deg); } }
+@keyframes planet-breathe { 0%, 100% { transform: translateY(0) rotate(-24deg) scale(1); } 50% { transform: translateY(-7px) rotate(-18deg) scale(1.035); } }
+@keyframes moon-drift { 0%, 100% { transform: translate(0, 0) rotate(0); } 50% { transform: translate(5px, -8px) rotate(20deg); } }
+@keyframes ring-spin { from { transform: rotate(-22deg); } to { transform: rotate(338deg); } }
+@keyframes ring-spin-reverse { from { transform: rotate(39deg); } to { transform: rotate(-321deg); } }
+@keyframes star-dance { 0%, 100% { opacity: .45; transform: translateY(0) scale(.9) rotate(0); } 50% { opacity: 1; transform: translateY(-10px) scale(1.2) rotate(18deg); } }
+@keyframes phase-pulse { 0%, 100% { box-shadow: 0 0 0 rgba(139,124,255,0); } 50% { box-shadow: 0 0 23px rgba(139,124,255,.14); } }
+@keyframes cinematic-in { from { opacity: 0; transform: translateY(20px) scale(.97); filter: blur(4px); } to { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); } }
+@keyframes halo-pulse { 0%, 100% { box-shadow: 0 0 25px rgba(139,124,255,.15); } 50% { box-shadow: 0 0 45px rgba(139,124,255,.3); } }
+@keyframes sheen { 0%, 42% { transform: translateX(-80%) rotate(20deg); opacity: 0; } 50% { opacity: 1; } 62%, 100% { transform: translateX(430%) rotate(20deg); opacity: 0; } }
+@keyframes word-arrive { from { opacity: 0; transform: translateY(9px) scale(.92); } to { opacity: 1; transform: translateY(0) scale(1); } }
+@keyframes avatar-pop { from { opacity: 0; transform: scale(.65) rotate(-10deg); } to { opacity: 1; transform: scale(1) rotate(0); } }
+@keyframes chip-pop { from { transform: scale(.94); } 60% { transform: scale(1.07); } to { transform: scale(1); } }
+@keyframes timer-shake { 0%, 100% { transform: translateX(0); } 30% { transform: translateX(-2px); } 70% { transform: translateX(2px); } }
+@keyframes chaos-wiggle { 0%, 80%, 100% { transform: rotate(0); } 85% { transform: rotate(-8deg); } 92% { transform: rotate(8deg); } }
+@keyframes prompt-arrive { from { opacity: 0; transform: translateX(14px); } to { opacity: 1; transform: translateX(0); } }
+@keyframes card-rise { from { opacity: 0; transform: translateY(16px) scale(.96); } to { opacity: 1; transform: translateY(0) scale(1); } }
+@keyframes selected-thump { 0% { transform: scale(.98); } 55% { transform: scale(1.035); } 100% { transform: scale(1); } }
+@keyframes backdrop-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes modal-arrive { from { opacity: 0; transform: translateY(20px) scale(.92); } to { opacity: 1; transform: translateY(0) scale(1); } }
+@keyframes ship-glow { 0%, 100% { filter: drop-shadow(0 0 12px rgba(255,255,255,.25)); } 50% { filter: drop-shadow(0 0 24px rgba(255,93,158,.5)); } }
+@keyframes countdown-pulse { 0%, 100% { box-shadow: 0 0 0 rgba(255,209,102,0); } 50% { box-shadow: 0 0 25px rgba(255,209,102,.24); } }
+@keyframes title-bloom { from { opacity: 0; transform: scale(.82); letter-spacing: -.13em; } to { opacity: 1; transform: scale(1); letter-spacing: -.055em; } }
+@keyframes truth-glow { from { box-shadow: inset 0 0 0 rgba(104,230,186,0), 0 0 0 rgba(104,230,186,0); } to { box-shadow: inset 0 0 25px rgba(104,230,186,.04), 0 0 28px rgba(104,230,186,.08); } }
+@keyframes toast-arrive { from { opacity: 0; transform: translateY(16px) scale(.94); } to { opacity: 1; transform: translateY(0) scale(1); } }
+
+@media (max-width: 680px) {
+  .hero-copy h1 em { font-size: .93em; }
+  .glass-panel:hover { transform: none; }
+  .setup-cockpit > * { animation-delay: .08s; }
+  .last-chance-card, .ejection-spotlight, .result-hero { animation-duration: .6s; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-shell, .topbar, .page, .hero-copy, .setup-cockpit > *, .glass-panel, .section-heading,
+  .player-input, .form-field, .toggle-row, .chip, .speaker-row, .role-row, .stat-grid > div,
+  .leader-row, .orbit-art, .planet-large, .planet-small, .ring-one, .ring-two, .orbit-star,
+  .phase-rail, .phase-step.current, .pass-panel, .secret-card, .ejection-spotlight,
+  .result-hero, .notice, .chaos-card, .last-chance-card, .ejection-empty, .secret-word,
+  .secret-card .avatar, .eject-avatar, .timer-danger, .chaos-icon, .prompt-card, .vote-card,
+  .modal-backdrop, .modal, .eject-ship, .last-chance-timer, .result-hero h1, .result-grid > *,
+  .truth-word, .toast, .site-footer { animation: none !important; }
+}

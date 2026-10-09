@@ -1,0 +1,146 @@
+/* Final viewport contract: every layout surface must be allowed to shrink. */
+html,
+body,
+#root {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  overflow-x: hidden;
+}
+
+.app-shell {
+  width: 100%;
+  max-width: 100vw;
+  overflow-x: clip;
+}
+
+.topbar,
+.page,
+.site-footer {
+  width: calc(100% - 24px);
+  max-width: 1180px;
+  min-width: 0;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.setup-cockpit,
+.hero-copy,
+.deal-stage,
+.discussion-grid,
+.result-grid,
+.section-heading,
+.player-list,
+.settings-grid,
+.custom-form,
+.vote-grid,
+.glass-panel,
+.discussion-grid > *,
+.result-grid > * {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+}
+
+button,
+input,
+select,
+textarea {
+  max-width: 100%;
+}
+
+.player-index {
+  flex: 0 0 22px;
+  width: 22px;
+  min-width: 22px;
+  white-space: nowrap;
+  overflow-wrap: normal;
+  word-break: normal;
+}
+
+input,
+select,
+textarea,
+button,
+.player-input,
+.vote-card,
+.prompt-card,
+.notice,
+.alert-card,
+.chaos-card,
+.last-chance-card,
+.secret-card,
+.result-hero,
+.modal {
+  overflow-wrap: anywhere;
+}
+
+img,
+svg,
+video,
+canvas {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+@media (max-width: 680px) {
+  .topbar,
+  .page,
+  .site-footer {
+    width: calc(100% - 24px);
+  }
+
+  .player-list,
+  .settings-grid,
+  .settings-grid.compact,
+  .discussion-grid,
+  .result-grid,
+  .vote-grid {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .section-heading,
+  .panel-title-row,
+  .deal-meta,
+  .vote-footer {
+    min-width: 0;
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 360px) {
+  .topbar,
+  .page,
+  .site-footer {
+    width: calc(100% - 20px);
+  }
+
+  .topbar {
+    gap: 7px;
+  }
+
+  .brand strong {
+    font-size: 11px;
+  }
+
+  .score-link {
+    font-size: 10px;
+  }
+
+  .players-panel,
+  .settings-panel,
+  .custom-panel {
+    padding: 14px;
+  }
+
+  .section-heading h2 {
+    font-size: 23px;
+  }
+
+  .player-input {
+    padding-left: 8px;
+    padding-right: 8px;
+  }
+}

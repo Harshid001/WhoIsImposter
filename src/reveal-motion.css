@@ -1,0 +1,736 @@
+/* 3D Physical Card Flip & Touch-and-Hold Motion */
+.deal-card-scene {
+  perspective: 1400px;
+  -webkit-perspective: 1400px;
+  width: 100%;
+  max-width: 520px;
+  margin: 0 auto 16px;
+  position: relative;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  touch-action: manipulation;
+  transform-style: preserve-3d;
+  -webkit-transform-style: preserve-3d;
+}
+
+/* Strip any conflicting legacy animations & filters from the flipping 3D card faces */
+.deal-card-scene .deal-card-face,
+.deal-card-3d .deal-card-front,
+.deal-card-3d .deal-card-back,
+.deal-card-3d .pass-panel,
+.deal-card-3d .secret-card {
+  animation: none !important;
+  filter: none !important;
+  -webkit-filter: none !important;
+}
+
+.deal-card-face * {
+  filter: none !important;
+  -webkit-filter: none !important;
+}
+
+/* 3D Flipping Card Body with Spring Dynamics */
+.deal-card-3d {
+  position: relative;
+  width: 100%;
+  min-height: 520px;
+  height: 520px;
+  border-radius: 28px;
+  cursor: pointer;
+  touch-action: none;
+  transform-style: preserve-3d;
+  -webkit-transform-style: preserve-3d;
+  transform: rotateY(0deg);
+  -webkit-transform: rotateY(0deg);
+  transition: transform 0.62s cubic-bezier(0.34, 1.42, 0.64, 1), box-shadow 0.45s ease;
+  box-shadow: 0 16px 45px rgba(42, 57, 84, 0.12);
+  will-change: transform;
+}
+
+:root[data-theme='dark'] .deal-card-3d,
+:root:not([data-theme='simple']) .deal-card-3d {
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4), 0 0 30px rgba(139, 124, 255, 0.1);
+}
+
+.deal-card-3d:focus-visible {
+  outline: 3px solid var(--violet);
+  outline-offset: 4px;
+}
+
+/* Physical 3D Flip State */
+.deal-card-3d.is-flipped {
+  transform: rotateY(180deg) scale(1.025);
+  -webkit-transform: rotateY(180deg) scale(1.025);
+  box-shadow: 0 32px 85px rgba(0, 0, 0, 0.28);
+}
+
+:root[data-theme='dark'] .deal-card-3d.is-flipped,
+:root:not([data-theme='simple']) .deal-card-3d.is-flipped {
+  box-shadow: 0 35px 95px rgba(0, 0, 0, 0.6), 0 0 55px rgba(139, 124, 255, 0.25);
+}
+
+.deal-card-3d:hover:not(.is-flipped) {
+  transform: translateY(-4px) rotateX(1.5deg) scale(1.005);
+  box-shadow: 0 22px 55px rgba(42, 57, 84, 0.16);
+}
+
+.deal-card-3d:active:not(.is-flipped) {
+  transform: scale(0.99);
+}
+
+/* Card Faces */
+.deal-card-face {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  min-height: 520px;
+  border-radius: 28px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  padding: 26px 22px;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  transform-style: preserve-3d;
+  -webkit-transform-style: preserve-3d;
+  overflow: hidden;
+}
+
+/* Holographic sheen light reflection sweep across the card on flip */
+.deal-card-scene .deal-card-face::after,
+.deal-card-3d .secret-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  border-radius: 28px;
+  background: linear-gradient(115deg, transparent 25%, rgba(255, 255, 255, 0.25) 50%, transparent 75%) !important;
+  transform: translateX(-120%) !important;
+  transition: transform 0.65s cubic-bezier(0.2, 0.8, 0.2, 1) !important;
+  animation: none !important;
+  pointer-events: none;
+}
+
+.deal-card-3d.is-flipped .deal-card-back::after {
+  transform: translateX(120%) !important;
+}
+
+/* Front Face */
+.deal-card-front {
+  transform: rotateY(0deg) translateZ(1px);
+  -webkit-transform: rotateY(0deg) translateZ(1px);
+  background: #ffffff;
+  border: 1.5px solid #cbd5e1;
+  color: var(--text, #172033);
+}
+
+:root[data-theme='dark'] .deal-card-front,
+:root:not([data-theme='simple']) .deal-card-front {
+  background: linear-gradient(155deg, rgba(26, 31, 66, 0.98), rgba(12, 15, 34, 0.98));
+  border-color: rgba(139, 124, 255, 0.35);
+  color: var(--text);
+}
+
+/* Back Face */
+.deal-card-back {
+  transform: rotateY(180deg) translateZ(1px);
+  -webkit-transform: rotateY(180deg) translateZ(1px);
+}
+
+/* Edge-On Midpoint Visibility Switching (eliminates mirroring artifacts) */
+.deal-card-3d:not(.is-flipped) .deal-card-front {
+  visibility: visible;
+  transition: visibility 0s 0.28s;
+}
+
+.deal-card-3d:not(.is-flipped) .deal-card-back {
+  visibility: hidden;
+  transition: visibility 0s 0.28s;
+}
+
+.deal-card-3d.is-flipped .deal-card-front {
+  visibility: hidden;
+  transition: visibility 0s 0.28s;
+}
+
+.deal-card-3d.is-flipped .deal-card-back {
+  visibility: visible;
+  transition: visibility 0s 0.28s;
+}
+
+/* Role-Specific Styles for Back Face */
+.deal-card-back.role-crew {
+  background: #e8f6ff;
+  border: 2px solid #247ba7;
+  color: #172033;
+  box-shadow: 0 20px 60px rgba(36, 123, 167, 0.22);
+}
+
+:root[data-theme='dark'] .deal-card-back.role-crew,
+:root:not([data-theme='simple']) .deal-card-back.role-crew {
+  background: linear-gradient(155deg, rgba(14, 38, 35, 0.98), rgba(9, 24, 26, 0.98));
+  border-color: rgba(104, 230, 186, 0.7);
+  color: #e6f7ff;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.5), 0 0 55px rgba(104, 230, 186, 0.22);
+}
+
+.deal-card-back.role-imposter {
+  background: #fff0f0;
+  border: 2px solid #c62828;
+  color: #172033;
+  box-shadow: 0 20px 60px rgba(198, 40, 40, 0.22);
+}
+
+:root[data-theme='dark'] .deal-card-back.role-imposter,
+:root:not([data-theme='simple']) .deal-card-back.role-imposter {
+  background: linear-gradient(155deg, rgba(46, 16, 22, 0.98), rgba(26, 10, 14, 0.98));
+  border-color: rgba(255, 111, 119, 0.75);
+  color: #fff0f0;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.5), 0 0 55px rgba(255, 111, 119, 0.25);
+}
+
+.deal-card-back.role-jester {
+  background: #fff9e7;
+  border: 2px solid #d88912;
+  color: #172033;
+}
+
+:root[data-theme='dark'] .deal-card-back.role-jester,
+:root:not([data-theme='simple']) .deal-card-back.role-jester {
+  background: linear-gradient(155deg, rgba(40, 32, 14, 0.98), rgba(24, 18, 8, 0.98));
+  border-color: rgba(255, 209, 102, 0.7);
+  color: #fff8e1;
+}
+
+.deal-card-back.role-detective {
+  background: #effcff;
+  border: 2px solid #1678ad;
+  color: #172033;
+}
+
+:root[data-theme='dark'] .deal-card-back.role-detective,
+:root:not([data-theme='simple']) .deal-card-back.role-detective {
+  background: linear-gradient(155deg, rgba(14, 34, 46, 0.98), rgba(8, 20, 28, 0.98));
+  border-color: rgba(97, 218, 251, 0.7);
+  color: #e0f7fa;
+}
+
+/* Card Header */
+.card-reveal-header {
+  display: flex;
+  width: 100%;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.card-lock-badge {
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--subtle, #8a98ab);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* Front Cover Layout */
+.cover-player-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.cover-player-name {
+  margin: 6px 0 8px;
+  font-size: clamp(30px, 6vw, 46px);
+  font-family: Bungee, Impact, sans-serif;
+  color: var(--text);
+  line-height: 1.1;
+}
+
+.cover-avatar-wrap {
+  margin: 8px 0;
+}
+
+/* Touch & Hold Scanner Pad */
+.hold-scanner-pad {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  max-width: 320px;
+  margin: 10px 0;
+  padding: 18px 16px;
+  border-radius: 20px;
+  border: 2px dashed rgba(49, 95, 214, 0.4);
+  background: radial-gradient(circle at 50% 50%, rgba(49, 95, 214, 0.08) 0%, rgba(49, 95, 214, 0.02) 75%);
+  transition: all 0.25s ease;
+  cursor: pointer;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.06);
+}
+
+:root[data-theme='dark'] .hold-scanner-pad,
+:root:not([data-theme='simple']) .hold-scanner-pad {
+  border-color: rgba(139, 124, 255, 0.45);
+  background: radial-gradient(circle at 50% 50%, rgba(139, 124, 255, 0.16) 0%, rgba(139, 124, 255, 0.04) 75%);
+}
+
+.deal-card-3d:hover .hold-scanner-pad,
+.deal-card-3d:active .hold-scanner-pad {
+  border-color: var(--violet);
+  background: radial-gradient(circle at 50% 50%, rgba(49, 95, 214, 0.15) 0%, rgba(49, 95, 214, 0.04) 75%);
+  box-shadow: 0 0 24px rgba(49, 95, 214, 0.18);
+}
+
+.scanner-beacon {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: rgba(49, 95, 214, 0.12);
+  border: 1px solid rgba(49, 95, 214, 0.35);
+}
+
+:root[data-theme='dark'] .scanner-beacon,
+:root:not([data-theme='simple']) .scanner-beacon {
+  background: rgba(139, 124, 255, 0.18);
+  border-color: rgba(139, 124, 255, 0.5);
+}
+
+.radar-ring {
+  position: absolute;
+  inset: -6px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(49, 95, 214, 0.35);
+  animation: radar-wave 2.2s ease-out infinite;
+  pointer-events: none;
+}
+
+.radar-ring.ring-two {
+  inset: -14px;
+  animation-delay: 1.1s;
+}
+
+.scanner-beacon-icon {
+  font-size: 26px;
+  animation: floaty 3s ease-in-out infinite;
+}
+
+.scanner-text-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  text-align: center;
+}
+
+.scanner-title {
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.scanner-sub {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.cover-footer-note {
+  text-align: center;
+  width: 100%;
+}
+
+.viewed-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 800;
+  background: rgba(46, 125, 50, 0.12);
+  color: #2e7d32;
+  border: 1px solid rgba(46, 125, 50, 0.3);
+  margin-top: 6px;
+}
+
+:root[data-theme='dark'] .viewed-badge,
+:root:not([data-theme='simple']) .viewed-badge {
+  background: rgba(104, 230, 186, 0.14);
+  color: var(--mint);
+  border-color: rgba(104, 230, 186, 0.35);
+}
+
+/* Back Face Reveal Content */
+.role-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.role-pill-crew {
+  background: rgba(36, 123, 167, 0.15);
+  color: #17688f;
+  border: 1px solid rgba(36, 123, 167, 0.35);
+}
+
+:root[data-theme='dark'] .role-pill-crew,
+:root:not([data-theme='simple']) .role-pill-crew {
+  background: rgba(104, 230, 186, 0.15);
+  color: var(--mint);
+  border-color: rgba(104, 230, 186, 0.4);
+}
+
+.role-pill-imposter {
+  background: rgba(198, 40, 40, 0.14);
+  color: #c62828;
+  border: 1px solid rgba(198, 40, 40, 0.35);
+}
+
+:root[data-theme='dark'] .role-pill-imposter,
+:root:not([data-theme='simple']) .role-pill-imposter {
+  background: rgba(255, 111, 119, 0.18);
+  color: var(--coral);
+  border-color: rgba(255, 111, 119, 0.45);
+}
+
+.live-peek-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  background: rgba(0, 0, 0, 0.08);
+  color: var(--text);
+  border: 1px solid rgba(0, 0, 0, 0.15);
+}
+
+:root[data-theme='dark'] .live-peek-indicator,
+:root:not([data-theme='simple']) .live-peek-indicator {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text);
+  border-color: rgba(255, 255, 255, 0.18);
+}
+
+.pulse-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #e53935;
+  box-shadow: 0 0 8px #e53935;
+  animation: beacon-blink 1.2s infinite ease-in-out;
+}
+
+.role-reveal-body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  width: 100%;
+  flex: 1;
+  justify-content: center;
+  padding: 10px 0;
+}
+
+.role-hero-title {
+  font-family: Bungee, Impact, sans-serif;
+  font-size: clamp(26px, 5.5vw, 38px);
+  line-height: 1.15;
+  margin-bottom: 12px;
+  letter-spacing: 0.04em;
+}
+
+.role-hero-crew {
+  color: #247ba7;
+}
+
+:root[data-theme='dark'] .role-hero-crew,
+:root:not([data-theme='simple']) .role-hero-crew {
+  color: var(--mint);
+  text-shadow: 0 0 24px rgba(104, 230, 186, 0.3);
+}
+
+.role-hero-imposter {
+  color: #c62828;
+}
+
+:root[data-theme='dark'] .role-hero-imposter,
+:root:not([data-theme='simple']) .role-hero-imposter {
+  color: var(--coral);
+  text-shadow: 0 0 24px rgba(255, 111, 119, 0.3);
+}
+
+.secret-transmission-box {
+  width: 100%;
+  max-width: 380px;
+  padding: 18px 16px;
+  border-radius: 18px;
+  margin: 6px 0 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.secret-box-crew {
+  background: rgba(36, 123, 167, 0.12);
+  border: 1.5px solid rgba(36, 123, 167, 0.35);
+}
+
+:root[data-theme='dark'] .secret-box-crew,
+:root:not([data-theme='simple']) .secret-box-crew {
+  background: rgba(104, 230, 186, 0.08);
+  border: 1.5px solid rgba(104, 230, 186, 0.35);
+}
+
+.secret-box-imposter {
+  background: rgba(198, 40, 40, 0.12);
+  border: 1.5px solid rgba(198, 40, 40, 0.35);
+}
+
+:root[data-theme='dark'] .secret-box-imposter,
+:root:not([data-theme='simple']) .secret-box-imposter {
+  background: rgba(255, 111, 119, 0.08);
+  border: 1.5px solid rgba(255, 111, 119, 0.35);
+}
+
+.transmission-label {
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--muted, #607089);
+}
+
+.transmission-word {
+  font-family: Bungee, Impact, sans-serif;
+  font-size: clamp(28px, 6.5vw, 44px);
+  color: var(--text);
+  line-height: 1.2;
+}
+
+.secret-box-crew .transmission-word {
+  color: #1678ad;
+}
+
+:root[data-theme='dark'] .secret-box-crew .transmission-word,
+:root:not([data-theme='simple']) .secret-box-crew .transmission-word {
+  color: var(--mint);
+  text-shadow: 0 0 25px rgba(104, 230, 186, 0.35);
+}
+
+.secret-box-imposter .transmission-word {
+  color: #c62828;
+}
+
+:root[data-theme='dark'] .secret-box-imposter .transmission-word,
+:root:not([data-theme='simple']) .secret-box-imposter .transmission-word {
+  color: var(--coral);
+  text-shadow: 0 0 25px rgba(255, 111, 119, 0.35);
+}
+
+.transmission-category {
+  font-size: 12px;
+  font-weight: 900;
+  color: var(--violet, #315fd6);
+  margin-top: 2px;
+}
+
+.role-mission-desc {
+  margin: 6px 0;
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--muted, #607089);
+  max-width: 340px;
+}
+
+.allies-warning-box {
+  margin-top: 6px;
+  padding: 7px 14px;
+  border-radius: 12px;
+  font-size: 12px;
+  background: rgba(198, 40, 40, 0.12);
+  color: #c62828;
+  border: 1px solid rgba(198, 40, 40, 0.25);
+}
+
+:root[data-theme='dark'] .allies-warning-box,
+:root:not([data-theme='simple']) .allies-warning-box {
+  background: rgba(255, 111, 119, 0.14);
+  color: var(--coral);
+  border-color: rgba(255, 111, 119, 0.3);
+}
+
+/* Bottom Release Banner */
+.release-cue-banner {
+  width: 100%;
+  padding: 11px 16px;
+  border-radius: 16px;
+  font-size: 12px;
+  font-weight: 800;
+  text-align: center;
+  background: rgba(0, 0, 0, 0.08);
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+:root[data-theme='dark'] .release-cue-banner,
+:root:not([data-theme='simple']) .release-cue-banner {
+  background: rgba(0, 0, 0, 0.4);
+  border-color: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(8px);
+}
+
+.release-cue-banner span {
+  font-size: 15px;
+}
+
+/* Pass Controls Bar */
+.deal-controls-bar {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  max-width: 520px;
+  margin: 0 auto;
+}
+
+.deal-pass-button {
+  width: 100%;
+  min-height: 52px;
+  font-size: 15px;
+  font-weight: 900;
+}
+
+.deal-status-hint {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--subtle);
+  min-height: 22px;
+}
+
+.deal-status-hint.is-viewed {
+  color: #2e7d32;
+  font-weight: 800;
+}
+
+:root[data-theme='dark'] .deal-status-hint.is-viewed,
+:root:not([data-theme='simple']) .deal-status-hint.is-viewed {
+  color: var(--mint);
+}
+
+.deal-lock-toggle {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--muted);
+  cursor: pointer;
+  background: none;
+  border: none;
+  padding: 4px 8px;
+  border-radius: 6px;
+  transition: color 0.2s, background 0.2s;
+}
+
+.deal-lock-toggle:hover {
+  color: var(--violet);
+  background: rgba(49, 95, 214, 0.08);
+}
+
+/* Animations */
+@keyframes radar-wave {
+  0% { transform: scale(0.85); opacity: 0.9; }
+  100% { transform: scale(1.55); opacity: 0; }
+}
+
+@keyframes beacon-blink {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.3; transform: scale(0.8); }
+}
+
+@keyframes card-shake {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-8px) rotate(-1deg); }
+  40%, 80% { transform: translateX(8px) rotate(1deg); }
+}
+
+.card-shake {
+  animation: card-shake 0.44s ease-in-out;
+}
+
+@keyframes card-deal-slide {
+  0% { opacity: 1; transform: translateX(0) scale(1); }
+  42% { opacity: 0.15; transform: translateX(-35px) scale(0.96) rotateY(-6deg); }
+  50% { opacity: 0; transform: translateX(40px) scale(0.96) rotateY(6deg); }
+  100% { opacity: 1; transform: translateX(0) scale(1) rotateY(0); }
+}
+
+.card-dealing-transition {
+  animation: card-deal-slide 0.42s cubic-bezier(0.2, 0.85, 0.32, 1) both;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 680px) {
+  .deal-card-3d,
+  .deal-card-face {
+    min-height: 480px;
+    height: 480px;
+  }
+  .deal-card-face {
+    padding: 20px 16px;
+  }
+  .hold-scanner-pad {
+    padding: 14px 12px;
+  }
+  .scanner-beacon {
+    width: 48px;
+    height: 48px;
+  }
+  .role-hero-title {
+    font-size: 26px;
+  }
+  .transmission-word {
+    font-size: 30px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .deal-card-3d {
+    transition: transform 0.1s ease !important;
+  }
+  .radar-ring,
+  .pulse-dot,
+  .card-shake,
+  .card-dealing-transition {
+    animation: none !important;
+  }
+}

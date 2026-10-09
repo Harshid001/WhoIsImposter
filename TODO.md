@@ -1,0 +1,25 @@
+# Who is Imposter? — Delivery TODO
+
+## Outcome 1 — playable game state machine
+Implement a browser-only 3–12 player pass-and-play game with explicit `SETUP → DEALING → DISCUSSION → VOTING → EJECTION → next round or RESULT → SCOREBOARD` transitions. Every crewmate receives the same secret word, every imposter receives only one related hint, multiple imposters are supported, and the game continues round by round until all imposters are ejected or living imposters are at least as numerous as living crewmates. Role assignment and first speaker selection are random and implemented as pure logic separate from UI.
+
+## Outcome 2 — setup and persistence
+Provide player count 3–12 with an imposter count clamped to `floor((players - 1) / 2)` or a random-imposters toggle; editable duplicate-safe player names with coloured astronaut avatars; shuffle seating; multi-select categories including Random, Food, Animals, Places, Things, Jobs, Movies/Fun, Sports, Technology, Nature and Custom words; Easy/Medium/Hard difficulty; discussion timer Off/1/2/3/5 minutes; no-ejection or revote tie-break; sound/vibration/category/imposter-count visibility; imposter-knows-category; saved presets; reset defaults; and a deal button. Persist names, settings, used-word history, scoreboard, theme and sound safely in localStorage with try/catch. Include a collapsible how-to-play panel and quick scoreboard access.
+
+## Outcome 3 — safe card dealing
+Show a pass-the-phone warning before every reveal, card X of N, progress, avatar and player name, and a large flip card. Crewmate cards show a green CREWMATE role, secret word and optional category. Imposter cards show a red IMPOSTER role, only the difficulty-appropriate hint, optional category, blend-in instruction and optional other-imposter names. Blind Imposter suppresses the hint. Spy Twist can assign a Jester and the card makes that role clear; Detective and other special roles have distinct card treatment. Hide & pass must flip back before advancing and ignore taps while the flip-back animation is running. After the last card, show an everyone-ready confirmation before discussion.
+
+## Outcome 4 — discussion and voting
+Show round number, first speaker, living speaking order, optional countdown with start/pause/+30 seconds, warning pulse at 10 seconds and a time-up state, clue prompt cards, and an optional Chaos event. Voting shows living players as large accessible cards, supports host-selected voting plus private per-player voting, offers skip, and confirms `Eject <name>?` before committing. Tie handling follows the selected no-ejection or revote setting.
+
+## Outcome 5 — ejection, special modes and result
+Show a dramatic ejection reveal with role-specific copy and remaining-imposter count, then continue to the next round, allow a final-imposter last-chance word guess when enabled, or end the game. Jester wins if voted out; Detective is identified to its player during dealing; Chaos can change the discussion prompt/order; imposters-knowing-each-other is respected. Result screen reveals crew/imposter outcome, secret word, hint, category, every player’s role, rounds, first ejection and MVP, with Play again, rematch, share result and home actions.
+
+## Outcome 6 — scoreboard and word bank
+Provide a persistent scoreboard with crew win +1 per crewmate, imposter win +3 per imposter, correct vote +1, Jester win +3 and Last-Chance success +2; show avatars, reset action, and a scoreboard screen. Include at least 10 categories with at least 20 simple everyday words each, each entry shaped `{ word, hint, hardHint }` where hints are single related words and not synonyms or parts of the word. Provide local custom word/category entry with validation and an extension-friendly data module.
+
+## Outcome 7 — visual system, responsiveness and accessibility
+Deliver a dark navy space atmosphere with purple/pink radial glows, stars and drifting planets; glassmorphism panels; ultraviolet-to-pink primary pills; red-to-orange danger actions; display/body typography pairing; light/dark/neon theme switcher; 12-colour avatar palette; crew mint and imposter coral role themes; flip/pop/pulse/confetti/ejection/transition polish; reduced-motion support; mobile-first layouts from 320px to ultra-wide without horizontal scroll; safe-area padding; large tap targets; keyboard-visible focus; semantic labels/ARIA; high contrast; and text plus icon role labels.
+
+## Outcome 8 — quality and delivery
+Handle refresh safely, prevent role leaks through transitions or browser back, clamp changing settings, trim/default names, avoid double taps and out-of-order screen changes, add toasts and lightweight sound/haptic feedback, support wake lock where available, and include unit-testable pure game logic for role assignment, win conditions, tie handling and scoring. Include `public/manus-routes.json`, README install/run instructions (`npm install`, `npm run dev`), rules, word/category/theme extension notes, a self-contained Vite build, diagnostics, and a verified preview.

@@ -1,0 +1,43 @@
+.room-panel {
+  grid-column: 1 / -1;
+  padding: 22px 24px;
+  border-left: 4px solid #315fd6;
+}
+
+.room-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.room-heading h2 { margin: 4px 0 0; font-size: 24px; }
+.room-copy { max-width: 720px; margin: 8px 0 17px; color: var(--muted); font-size: 13px; line-height: 1.55; }
+.room-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; }
+.room-code { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; padding: 13px 15px; border: 1px dashed #b6c8e8; border-radius: 13px; background: #f7faff; }
+.room-code span { color: var(--subtle); font-size: 10px; font-weight: 900; letter-spacing: .14em; text-transform: uppercase; }
+.room-code strong { color: #244da9; font-size: 23px; letter-spacing: .14em; }
+.room-code button { margin-left: auto; border: 0; color: #315fd6; background: transparent; font-size: 12px; font-weight: 900; cursor: pointer; }
+.room-input-row { display: grid; grid-template-columns: minmax(0, 1fr) 110px auto; gap: 9px; margin-top: 12px; }
+.room-input-row input { min-width: 0; padding: 12px 13px; border: 1px solid var(--line); border-radius: 11px; color: var(--text); background: #f9fbfe; }
+.room-members { margin-top: 16px; }
+.room-members .field-label { display: block; margin-bottom: 8px; }
+.room-player-list { display: flex; flex-wrap: wrap; gap: 7px; }
+.room-player-list span { padding: 7px 10px; border: 1px solid var(--line); border-radius: 999px; color: #334b68; background: #f9fbfe; font-size: 11px; font-weight: 800; }
+.room-notice { margin: 14px 0; padding: 11px 13px; border: 1px solid #efd39a; border-radius: 11px; color: #80531e; background: #fff9e9; font-size: 12px; line-height: 1.45; }
+.room-panel > .room-actions:last-child { margin-top: 16px; }
+
+@media (max-width: 680px) {
+  .room-panel { padding: 17px; }
+  .room-heading { align-items: flex-start; }
+  .room-heading h2 { font-size: 22px; }
+  .room-code { align-items: flex-start; flex-direction: column; gap: 7px; }
+  .room-code button { margin-left: 0; padding: 0; }
+  .room-input-row { grid-template-columns: 1fr; }
+  .room-input-row .button { width: 100%; }
+}
+
+@media (max-width: 360px) {
+  .room-heading { display: block; }
+  .room-heading .badge { margin-top: 10px; }
+}
