@@ -816,6 +816,15 @@
   line-height: 1.2;
 }
 
+.transmission-description {
+  max-width: 34ch;
+  margin-top: 6px;
+  color: var(--muted, #607089);
+  font-size: 13px;
+  line-height: 1.5;
+  text-align: center;
+}
+
 .secret-box-crew .transmission-word {
   color: #1678ad;
 }

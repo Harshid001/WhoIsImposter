@@ -448,6 +448,9 @@ function DealScreen({ state, dispatch }) {
                 <div className={`secret-transmission-box secret-box-${roleCard.tone}`}>
                   <span className="transmission-label">{roleCard.label}</span>
                   <strong className="transmission-word">{roleCard.secret}</strong>
+                  {roleCard.description ? (
+                    <span className="transmission-description">{roleCard.description}</span>
+                  ) : null}
                   {roleCard.category ? (
                     <span className="transmission-category">Category · {roleCard.category}</span>
                   ) : null}

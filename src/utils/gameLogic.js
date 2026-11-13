@@ -169,7 +169,7 @@ export function displayForPlayer(player, word, settings, allPlayers = []) {
   if (player.isDetective) {
     return { title: 'DETECTIVE', label: 'The secret word', secret: word.word, tone: 'detective', subline: 'Ask one yes/no question in round one.', category: settings.showCategory ? word.category : null, allies: [] };
   }
-  return { title: 'CREWMATE', label: 'The secret word', secret: word.word, tone: 'crew', subline: 'Give a clue. Protect the signal.', category: settings.showCategory ? word.category : null, allies: [] };
+  return { title: 'CREWMATE', label: 'The secret word', secret: word.word, description: word.description, tone: 'crew', subline: 'Give a clue. Protect the signal.', category: settings.showCategory ? word.category : null, allies: [] };
 }
 
 export function tallyVotes(votes, players) {
